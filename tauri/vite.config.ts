@@ -3,6 +3,11 @@ import { defineConfig } from "vite";
 const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig({
+  root: "src",
+  build: {
+    outDir: "../dist",
+    emptyOutDir: true,
+  },
   clearScreen: false,
   server: {
     port: 1420,
