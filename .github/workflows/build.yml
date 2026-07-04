@@ -5,6 +5,9 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -28,11 +31,12 @@ jobs:
       - name: Build Tauri app (MSI)
         run: npm run tauri build -- --bundles msi
 
-      - name: Upload MSI
-        uses: actions/upload-artifact@v4
+      - name: Upload MSI to Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: Pic2WebP-Windows
-          path: tauri/src-tauri/target/release/bundle/msi/*.msi
+          files: tauri/src-tauri/target/release/bundle/msi/*.msi
+          make_latest: false
 
   build-macos:
     runs-on: macos-latest
@@ -59,8 +63,9 @@ jobs:
       - name: Build Tauri app (DMG)
         run: npm run tauri build -- --bundles dmg
 
-      - name: Upload DMG
-        uses: actions/upload-artifact@v4
+      - name: Upload DMG to Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: Pic2WebP-macOS
-          path: tauri/src-tauri/target/release/bundle/dmg/*.dmg
+          files: tauri/src-tauri/target/release/bundle/dmg/*.dmg
+          make_latest: true
