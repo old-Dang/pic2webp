@@ -92,6 +92,11 @@ jobs:
       - name: Install cwebp
         run: brew install webp
 
+      - name: Bundle cwebp into tools/ (for Tauri resource bundler)
+        run: |
+          cp "$(which cwebp)" tools/cwebp
+          chmod +x tools/cwebp
+
       - name: Install npm dependencies
         run: npm install
 
@@ -161,6 +166,9 @@ jobs:
           cp "$UNIVERSAL_BIN" "$APP_PATH/Contents/MacOS/pic2webp"
           chmod +x "$APP_PATH/Contents/MacOS/pic2webp"
           cp src-tauri/icons/icon.icns "$APP_PATH/Contents/Resources/"
+          # Bundle cwebp binary into Resources/ so resolve_tools can find it
+          cp "$(which cwebp)" "$APP_PATH/Contents/Resources/"
+          chmod +x "$APP_PATH/Contents/Resources/cwebp"
           codesign --force --deep -s - "$APP_PATH"
           
           UNIVERSAL_DMG="src-tauri/target/release/bundle/dmg/${APP_NAME}_${VER}_universal.dmg"
