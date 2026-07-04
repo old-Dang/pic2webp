@@ -3,8 +3,9 @@ use std::collections::HashMap;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager, State};
 
@@ -214,9 +215,9 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
     drop(converting);
 
     std::thread::spawn(move || {
-        for file in &all_files {
-            let path = Path::new(file);
-            let original_size = std::fs::metadata(file).map(|m| m.len() as i64).unwrap_or(0);
+        for src_path in &all_files {
+            let path = Path::new(src_path);
+            let original_size = std::fs::metadata(src_path).map(|m| m.len() as i64).unwrap_or(0);
             stats.total_original += original_size;
 
             let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase();
@@ -241,21 +242,21 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
 
             // ── Step 1: pre-compress JPEG ──
             if (ext == "jpg" || ext == "jpeg") && jpegoptim.is_some() {
-                emit_progress(&app_handle, file, "compressing", "JPEG 预压缩...", 0, 0);
+                emit_progress(&app_handle, src_path, "compressing", "JPEG 预压缩...", 0, 0);
                 let mut cmd = Command::new(jpegoptim.as_ref().unwrap());
-                cmd.arg("--strip-all").arg("--all-normal").arg(file);
-                run_cmd_timeout(&mut cmd, 60);
+                cmd.arg("--strip-all").arg("--all-normal").arg(src_path);
+                run_cmd_timeout(&mut cmd, 60); // CR11: 60s for jpegoptim
             }
 
             // ── Step 2: pre-compress PNG ──
             if ext == "png" {
-                emit_progress(&app_handle, file, "compressing", "PNG 预压缩...", 0, 0);
+                emit_progress(&app_handle, src_path, "compressing", "PNG 预压缩...", 0, 0);
 
                 // P1: use system temp dir, no path traversal
                 // S1: use set_extension to avoid format! panic on {}
                 let pngquant_output = if let (Some(tool), Some(oxi)) = (&pngquant, &oxipng) {
                     let temp_dir = std::env::temp_dir();
-                    let stem = Path::new(file).file_stem().and_then(|s| s.to_str()).unwrap_or("temp");
+                    let stem = Path::new(src_path).file_stem().and_then(|s| s.to_str()).unwrap_or("temp");
                     let mut tmp_path = temp_dir.join(format!("pic2webp-{}", stem));
                     tmp_path.set_extension("pngquant.png");
                     let tmp_str = tmp_path.to_string_lossy().to_string();
@@ -268,14 +269,14 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
                         .arg("--force")
                         .arg("--output")
                         .arg(&tmp_str)
-                        .arg(file);
+                        .arg(src_path);
                     let (code, _) = run_cmd_timeout(&mut png_cmd, 90);
 
                     if code == 0 && tmp_path.exists() {
                         let mut oxi_cmd = Command::new(oxi);
                         oxi_cmd.arg("--strip").arg("safe")
                             .arg("--opt").arg("3")
-                            .arg("--out").arg(file)
+                            .arg("--out").arg(src_path)
                             .arg(&tmp_str);
                         run_cmd_timeout(&mut oxi_cmd, 120);
                         let _ = std::fs::remove_file(&tmp_str);
@@ -294,20 +295,20 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
                         let mut oxi_cmd = Command::new(oxi);
                         oxi_cmd.arg("--strip").arg("safe")
                             .arg("--opt").arg("1")
-                            .arg(file);
+                            .arg(src_path);
                         run_cmd_timeout(&mut oxi_cmd, 120);
                     }
                 }
             }   // ← CR2: if-ext-png closes here; Step 3 must be outside (all formats)
 
             // ── Step 3: convert to WebP (ALL formats, not just PNG) ──
-            emit_progress(&app_handle, file, "converting", "转换为 WebP...", 0, 0);
+            emit_progress(&app_handle, src_path, "converting", "转换为 WebP...", 0, 0);
 
             let mut cwebp_cmd = Command::new(&cwebp);
             cwebp_cmd.arg("-q").arg(quality.to_string())
                 .arg("-mt").arg("-quiet").arg("-sharp_yuv")
-                .arg(file).arg("-o").arg(&output_str);
-            let (cwebp_code, cwebp_output) = run_cmd_timeout(&mut cwebp_cmd, 180);
+                .arg(src_path).arg("-o").arg(&output_str);
+            let (cwebp_code, cwebp_output) = run_cmd_timeout(&mut cwebp_cmd, 180); // CR11: 3min for large images
 
             if cwebp_code == 0 {
                 let new_size = std::fs::metadata(&output_str).map(|m| m.len() as i64).unwrap_or(0);
@@ -321,24 +322,24 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
                 };
                 stats.success_count += 1;
 
-                emit_progress(&app_handle, file, "done", &format!("已保存 {} KB", new_size / 1024), saved_bytes, saved_pct);
+                emit_progress(&app_handle, src_path, "done", &format!("已保存 {} KB", new_size / 1024), saved_bytes, saved_pct);
 
                 if request.delete_source {
-                    if let Err(e) = std::fs::remove_file(file) {
-                        emit_progress(&app_handle, file, "done",
+                    if let Err(e) = std::fs::remove_file(src_path) {
+                        emit_progress(&app_handle, src_path, "done",
                             &format!("已转换，但删除源文件失败: {}", e), saved_bytes, saved_pct);
                     }
                 }
             } else {
-                let short_msg = if cwebp_output.len() > 100 {
-                    format!("{}...", &cwebp_output[..100])
+                let short_msg = if cwebp_output.len() > 120 {
+                    format!("{}... (已截断)", &cwebp_output[..120])
                 } else if cwebp_output.is_empty() {
                     "未知错误".to_string()
                 } else {
                     cwebp_output
                 };
                 stats.fail_count += 1;
-                emit_progress(&app_handle, file, "failed", &short_msg, 0, 0);
+                emit_progress(&app_handle, src_path, "failed", &short_msg, 0, 0);
             }
 
             let _ = app_handle.emit("convert-stats", &stats);
@@ -397,19 +398,26 @@ fn run_cmd_timeout(cmd: &mut Command, secs: u64) -> (i32, String) {
     let (exit_tx, exit_rx) = mpsc::channel();
     let (out_tx, out_rx) = mpsc::channel();
     let (err_tx, err_rx) = mpsc::channel();
+    let cancelled = Arc::new(AtomicBool::new(false));
 
     if let Some(stdout) = child.stdout.take() {
+        let cancelled_r = cancelled.clone();
         std::thread::spawn(move || {
             let mut buf = String::new();
             let _ = std::io::BufReader::new(stdout).read_to_string(&mut buf);
-            let _ = out_tx.send(buf);
+            if !cancelled_r.load(Ordering::Relaxed) {
+                let _ = out_tx.send(buf);
+            }
         });
     }
     if let Some(stderr) = child.stderr.take() {
+        let cancelled_r = cancelled.clone();
         std::thread::spawn(move || {
             let mut buf = String::new();
             let _ = std::io::BufReader::new(stderr).read_to_string(&mut buf);
-            let _ = err_tx.send(buf);
+            if !cancelled_r.load(Ordering::Relaxed) {
+                let _ = err_tx.send(buf);
+            }
         });
     }
 
@@ -429,6 +437,8 @@ fn run_cmd_timeout(cmd: &mut Command, secs: u64) -> (i32, String) {
         Ok(Err(_)) => (-1, "进程监控错误".into()),
         Err(mpsc::RecvTimeoutError::Timeout) => {
             // CR3: cross-platform kill (kill -9 on Unix, taskkill on Windows)
+            // CR4: signal reader threads to drop their output
+            cancelled.store(true, Ordering::Relaxed);
             kill_process(pid);
             std::thread::sleep(Duration::from_millis(200));
             (-1, format!("超时 (>{}s)", secs))
