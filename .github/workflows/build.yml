@@ -136,6 +136,12 @@ jobs:
           # Copy icon
           cp src-tauri/icons/icon.icns "$APP_PATH/Contents/Resources/"
           
+          # Ad-hoc sign the .app (required by macOS Gatekeeper for unsigned apps)
+          codesign --force --deep -s - "$APP_PATH"
+          
+          # Verify signing
+          codesign -dvv "$APP_PATH" 2>&1 | head -5
+          
           # Create universal DMG
           UNIVERSAL_DMG="src-tauri/target/release/bundle/dmg/Pic2WebP_1.0.0_universal.dmg"
           hdiutil create -volname "$APP_NAME" \
