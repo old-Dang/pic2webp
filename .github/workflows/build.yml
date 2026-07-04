@@ -129,7 +129,8 @@ jobs:
           hdiutil detach "$MOUNT_POINT" -force
           rm -f "$ARM64_DMG"
           hdiutil convert "$RW_IMG" -format UDZO -o "$ARM64_DMG"
-          rm -f "$RW_IMG" "$MOUNT_POINT"
+          rm -f "$RW_IMG"
+          rmdir "$MOUNT_POINT" 2>/dev/null || true
 
       # ── Universal DMG (ARM64 + x86_64) ──
       - name: Build frontend
