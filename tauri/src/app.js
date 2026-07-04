@@ -76,6 +76,8 @@ async function checkTools() {
 
 function addFiles(paths) {
   for (const p of paths) {
+    // Skip invalid paths
+    if (!p || typeof p !== "string") continue;
     if (!files.some((f) => f.path === p)) {
       files.push({ path: p, status: "pending", message: "", savedBytes: 0, savedPct: 0 });
     }
@@ -109,6 +111,9 @@ function renderFiles() {
   clearBtn.hidden = false;
 
   for (const f of files) {
+    // Skip malformed entries
+    if (!f.path || typeof f.path !== "string") continue;
+
     const item = document.createElement("div");
     item.className = "file-item";
     item.dataset.path = f.path;
@@ -245,7 +250,7 @@ async function startConvert() {
 
 // ─── Event listeners ────────────────────────────────────────────────
 
-// Drag & drop
+// Drag & drop — read files from the DOM event directly
 dropzone.addEventListener("dragover", (e) => {
   e.preventDefault();
   dropzone.classList.add("dragover");
@@ -255,7 +260,17 @@ dropzone.addEventListener("dragleave", () => {
   dropzone.classList.remove("dragover");
 });
 
-dropzone.addEventListener("drop", (e) => { e.preventDefault(); dropzone.classList.remove("dragover"); });
+dropzone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dropzone.classList.remove("dragover");
+  // Extract file paths from DataTransfer (works in Tauri WebView on all platforms)
+  if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    const paths = Array.from(e.dataTransfer.files)
+      .map((f) => f.path)
+      .filter(Boolean); // drop undefined/null paths
+    if (paths.length > 0) addFiles(paths);
+  }
+});
 
 // File picker
 dropzone.addEventListener("click", () => fileInput.click());
@@ -344,8 +359,10 @@ async function init() {
 
   // Handle files dropped from OS (passed via Tauri's drag-drop event)
   await listen("tauri://drag-drop", (event) => {
-    const paths = event.payload.paths || [];
-    addFiles(paths);
+    const raw = event.payload.paths || [];
+    // Normalize: Tauri v2 might return string[] or [{path: string}, ...]
+    const paths = raw.map((p) => (typeof p === "string" ? p : p && p.path)).filter(Boolean);
+    if (paths.length > 0) addFiles(paths);
   });
 }
 
