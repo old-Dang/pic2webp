@@ -1,0 +1,20 @@
+[package]
+name = "pic2webp"
+version = "1.0.0"
+description = "图片转 WebP 工具 - Tauri 跨平台版"
+authors = ["danglei"]
+edition = "2024"
+
+[lib]
+name = "pic2webp_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+walkdir = "2"
+which = "7"
+tauri-plugin-dialog = "2"

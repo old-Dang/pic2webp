@@ -1,0 +1,26 @@
+# Build
+.build/
+*.xcodeproj/
+DerivedData/
+
+# macOS
+.DS_Store
+*.swp
+._*
+
+# Swift Package Manager
+.build/
+Packages/
+Package.resolved
+xcuserdata/
+
+# App bundle (本地打的产物)
+*.app/
+*.dmg
+
+# 敏感
+*.p12
+*.cer
+*.key
+*.mobileprovision
+.env

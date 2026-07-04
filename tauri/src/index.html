@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pic2WebP</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- ===== Header ===== -->
+    <header>
+      <div class="logo">
+        <svg width="28" height="28" viewBox="0 0 100 100" fill="none">
+          <rect width="100" height="100" rx="20" fill="#10b981"/>
+          <text x="50" y="62" text-anchor="middle" fill="white" font-size="36" font-weight="bold" font-family="sans-serif">W</text>
+          <text x="62" y="38" text-anchor="middle" fill="white" font-size="14" font-weight="600" font-family="sans-serif">P</text>
+        </svg>
+        <div class="logo-text">
+          <h1>Pic2WebP</h1>
+          <span class="subtitle">图片转 WebP · 本地处理 · 免费</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===== Main layout ===== -->
+    <div class="main-layout">
+      <!-- ===== Left: Drop zone + File list ===== -->
+      <section class="left-panel">
+        <!-- Drop zone -->
+        <div id="dropzone" class="dropzone">
+          <input type="file" id="file-input" accept=".jpg,.jpeg,.png,.webp" multiple hidden />
+          <div class="dropzone-content">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <p class="dropzone-text">拖拽图片到此处</p>
+            <p class="dropzone-hint">或点击选择文件 · JPG / PNG / WebP</p>
+          </div>
+        </div>
+
+        <!-- File list -->
+        <div class="file-list-header">
+          <span id="file-count">已选择 0 个文件</span>
+          <button id="clear-btn" class="btn-text" hidden>清空</button>
+        </div>
+        <div id="file-list" class="file-list">
+          <div class="empty-state">
+            <p>为什么要用 WebP？</p>
+            <ul>
+              <li>Google 开发的现代图片格式</li>
+              <li>同等质量下比 JPEG 小 25-35%</li>
+              <li>支持透明通道（替代 PNG）</li>
+              <li>Chrome / Edge / Firefox / Safari 全支持</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Right: Controls + Stats ===== -->
+      <section class="right-panel">
+        <!-- Quality slider -->
+        <div class="control-group">
+          <label class="control-label">质量 <span id="quality-val">80</span></label>
+          <div class="slider-row">
+            <span class="slider-end">小而糊</span>
+            <input type="range" id="quality-slider" class="quality-slider" min="10" max="100" value="80" />
+            <span class="slider-end">大而清</span>
+          </div>
+          <div class="quality-bar">
+            <div class="quality-fill" id="quality-fill" style="width: 70%"></div>
+          </div>
+        </div>
+
+        <!-- Options -->
+        <div class="control-group">
+          <label class="toggle-row">
+            <input type="checkbox" id="chk-recursive" />
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span>递归子目录</span>
+          </label>
+          <p class="hint">处理子文件夹内的图片，保持目录结构</p>
+        </div>
+
+        <div class="control-group">
+          <label class="toggle-row">
+            <input type="checkbox" id="chk-delete" />
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span>删除源文件</span>
+          </label>
+          <p class="hint warn">转换成功后自动删除原图（谨慎！）</p>
+        </div>
+
+        <!-- Output directory -->
+        <div class="control-group">
+          <label class="control-label">输出目录</label>
+          <div class="dir-row">
+            <input type="text" id="output-dir" class="dir-input" readonly placeholder="与源文件相同目录" />
+            <button id="dir-btn" class="btn-secondary">选择</button>
+            <button id="dir-clear" class="btn-text" hidden>×</button>
+          </div>
+        </div>
+
+        <!-- Separator -->
+        <hr class="divider" />
+
+        <!-- Stats -->
+        <div class="stats-panel" id="stats-panel" hidden>
+          <div class="stat-row">
+            <span class="stat-label">成功</span>
+            <span class="stat-value" id="stat-success">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">跳过</span>
+            <span class="stat-value" id="stat-skip">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">失败</span>
+            <span class="stat-value stat-fail" id="stat-fail">0</span>
+          </div>
+          <div class="stat-row stat-total">
+            <span class="stat-label">节省</span>
+            <span class="stat-value stat-saved" id="stat-saved">-</span>
+          </div>
+        </div>
+
+        <!-- Tool status -->
+        <div class="tool-status" id="tool-status">
+          <span class="tool-check" id="tool-cwebp">cwebp · 检查中...</span>
+        </div>
+
+        <!-- Convert button -->
+        <button id="convert-btn" class="btn-primary" disabled>
+          <span id="btn-text">开始转换</span>
+          <span id="btn-spinner" class="spinner" hidden></span>
+        </button>
+
+        <!-- Donate -->
+        <button id="donate-btn" class="btn-ghost">☕ 请作者喝杯奶茶</button>
+      </section>
+    </div>
+
+    <!-- ===== Donate modal ===== -->
+    <div id="donate-modal" class="modal-overlay" hidden>
+      <div class="modal">
+        <button id="modal-close" class="modal-close">×</button>
+        <h2>请作者喝杯奶茶 🧋</h2>
+        <p class="modal-hint">如果 Pic2WebP 对你有帮助，欢迎打赏支持</p>
+        <div class="qr-row">
+          <div class="qr-card">
+            <img src="/alipay_donate.jpg" alt="支付宝" />
+            <span>支付宝</span>
+          </div>
+          <div class="qr-card">
+            <img src="/wechat_donate.jpg" alt="微信" />
+            <span>微信</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
