@@ -308,9 +308,9 @@ dirClear.addEventListener("click", () => {
 convertBtn.addEventListener("click", startConvert);
 
 // Donate modal
-donateBtn.addEventListener("click", () => { donateModal.hidden = false; });
-modalClose.addEventListener("click", () => { donateModal.hidden = true; });
-donateModal.addEventListener("click", (e) => { if (e.target === donateModal) donateModal.hidden = true; });
+donateBtn.addEventListener("click", () => { donateModal.classList.add("visible"); });
+modalClose.addEventListener("click", () => { donateModal.classList.remove("visible"); });
+donateModal.addEventListener("click", (e) => { if (e.target === donateModal) donateModal.classList.remove("visible"); });
 
 // Keyboard shortcut: Enter to start (M3: skip when typing in input fields)
 document.addEventListener("keydown", (e) => {
