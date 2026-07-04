@@ -61,7 +61,13 @@ jobs:
         run: npm run tauri build -- --bundles dmg
 
       - name: Rename ARM64 DMG
-        run: mv src-tauri/target/release/bundle/dmg/*.dmg src-tauri/target/release/bundle/dmg/Pic2WebP_1.0.0_arm64.dmg
+        run: |
+          # Tauri v2: .app is in macos/, DMG is in dmg/
+          if ls src-tauri/target/release/bundle/dmg/*.dmg 2>/dev/null; then
+            mv src-tauri/target/release/bundle/dmg/*.dmg src-tauri/target/release/bundle/dmg/Pic2WebP_1.0.0_arm64.dmg
+          else
+            echo "No DMG found (may be sign-only build)"
+          fi
 
       - name: Build Intel binary
         working-directory: tauri/src-tauri
@@ -71,14 +77,30 @@ jobs:
 
       - name: Create universal binary and DMG
         run: |
+          set -e  # stop on any error
           APP_NAME="Pic2WebP"
-          APP_PATH="src-tauri/target/release/bundle/dmg/$APP_NAME.app"
           
-          # lipo the two architectures into the .app bundle
+          # Locate the .app bundle (Tauri v2 puts it in macos/ subdirectory)
+          APP_PATH=$(find src-tauri/target/release/bundle -name "$APP_NAME.app" -type d | head -1)
+          echo "Found app at: $APP_PATH"
+          
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: .app bundle not found!"
+            find src-tauri/target/release/bundle -type d -maxdepth 3
+            exit 1
+          fi
+          
+          # Verify binary exists in .app
+          ls -la "$APP_PATH/Contents/MacOS/"
+          
+          # Create universal binary inside the .app
           lipo -create \
             -output "$APP_PATH/Contents/MacOS/pic2webp" \
             "src-tauri/target/release/pic2webp" \
             "src-tauri/target/x86_64-apple-darwin/release/pic2webp"
+          
+          # Verify it's a universal binary
+          lipo -info "$APP_PATH/Contents/MacOS/pic2webp"
           
           # Re-pack the DMG with universal binary
           UNIVERSAL_DMG="src-tauri/target/release/bundle/dmg/Pic2WebP_1.0.0_universal.dmg"
