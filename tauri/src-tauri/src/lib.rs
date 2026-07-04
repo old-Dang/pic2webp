@@ -254,9 +254,13 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
 
                 // P1: use system temp dir, no path traversal
                 // S1: use set_extension to avoid format! panic on {}
+                // CR6: stem is a format arg (not template), so {test} filenames are safe
+                // CR9: Windows MAX_PATH: temp_dir ~40 chars + prefix ~20 + stem + .pngquant.png
+                //      may exceed 260 on extreme filenames (>180 chars), but rare
                 let pngquant_output = if let (Some(tool), Some(oxi)) = (&pngquant, &oxipng) {
                     let temp_dir = std::env::temp_dir();
                     let stem = Path::new(src_path).file_stem().and_then(|s| s.to_str()).unwrap_or("temp");
+                    debug_assert!(!stem.contains('/') && !stem.contains('\\'), "stem contains path separator");
                     let mut tmp_path = temp_dir.join(format!("pic2webp-{}", stem));
                     tmp_path.set_extension("pngquant.png");
                     let tmp_str = tmp_path.to_string_lossy().to_string();

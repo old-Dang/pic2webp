@@ -829,6 +829,9 @@ struct ContentView: View {
                 options: [.skipsHiddenFiles]
             ) else { return found }
             for case let fileURL as URL in enumerator {
+                // S3: skip symbolic links to prevent infinite recursion on symlink loops
+                let isSymlink = (try? fileURL.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink) ?? false
+                if isSymlink { continue }
                 let ext = fileURL.pathExtension.lowercased()
                 guard supportedExts.contains(ext) else { continue }
                 found.append(fileURL)

@@ -62,6 +62,7 @@ cd tauri
 brew install webp
 npm install
 npm run tauri build
+# 产物: tauri/src-tauri/target/release/bundle/dmg/Pic2WebP_*.dmg
 ```
 
 ### macOS (原生 SwiftUI)
@@ -69,6 +70,7 @@ npm run tauri build
 ```bash
 cd mac
 swift build -c release
+# 产物: mac/.build/release/Pic2WebP (或通过 Xcode Archive 导出 .app)
 ```
 
 ### Windows
@@ -77,6 +79,8 @@ swift build -c release
 cd tauri
 npm install
 npm run tauri build
+# 产物: tauri/src-tauri/target/release/bundle/msi/Pic2WebP_*.msi
+# 或:   tauri/src-tauri/target/release/bundle/nsis/Pic2WebP_*-setup.exe
 ```
 
 ## 隐私
