@@ -283,10 +283,10 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
                     } else {
                         let _ = std::fs::remove_file(&tmp_str);
                         false
-                    }   // ← inner if/else value → if let's value
-            } else {
-                false
-            };
+                    }
+                } else {
+                    false
+                };
 
                 if !pngquant_output {
                     // pngquant unavailable or failed — try oxipng directly on original
@@ -298,8 +298,9 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
                         run_cmd_timeout(&mut oxi_cmd, 120);
                     }
                 }
+            }   // ← CR2: if-ext-png closes here; Step 3 must be outside (all formats)
 
-            // ── Step 3: convert to WebP ──
+            // ── Step 3: convert to WebP (ALL formats, not just PNG) ──
             emit_progress(&app_handle, file, "converting", "转换为 WebP...", 0, 0);
 
             let mut cwebp_cmd = Command::new(&cwebp);
@@ -331,12 +332,13 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
             } else {
                 let short_msg = if cwebp_output.len() > 100 {
                     format!("{}...", &cwebp_output[..100])
+                } else if cwebp_output.is_empty() {
+                    "未知错误".to_string()
                 } else {
                     cwebp_output
                 };
                 stats.fail_count += 1;
                 emit_progress(&app_handle, file, "failed", &short_msg, 0, 0);
-            }
             }
 
             let _ = app_handle.emit("convert-stats", &stats);
@@ -362,6 +364,22 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
 }
 
 // ─── Command timeout helper (H2) ──────────────────────────────────
+
+/// Kill a process by PID (cross-platform)
+#[cfg(unix)]
+fn kill_process(pid: u32) {
+    let _ = std::process::Command::new("kill")
+        .arg("-9")
+        .arg(pid.to_string())
+        .status();
+}
+#[cfg(windows)]
+fn kill_process(pid: u32) {
+    let _ = std::process::Command::new("taskkill")
+        .arg("/PID").arg(pid.to_string())
+        .arg("/F").arg("/T")
+        .status();
+}
 
 /// Run a command with a timeout. Returns (exit_code, combined stdout+stderr).
 /// Kills the process if it exceeds the timeout.
@@ -410,11 +428,8 @@ fn run_cmd_timeout(cmd: &mut Command, secs: u64) -> (i32, String) {
         }
         Ok(Err(_)) => (-1, "进程监控错误".into()),
         Err(mpsc::RecvTimeoutError::Timeout) => {
-            // Kill by PID — child was moved into the wait thread, can't call child.kill()
-            let _ = std::process::Command::new("kill")
-                .arg("-9")
-                .arg(pid.to_string())
-                .status();
+            // CR3: cross-platform kill (kill -9 on Unix, taskkill on Windows)
+            kill_process(pid);
             std::thread::sleep(Duration::from_millis(200));
             (-1, format!("超时 (>{}s)", secs))
         }
