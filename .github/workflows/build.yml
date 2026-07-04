@@ -110,6 +110,27 @@ jobs:
           arm64_dmg="src-tauri/target/release/bundle/dmg/${APP_NAME}_${VER}_arm64.dmg"
           mv src-tauri/target/release/bundle/dmg/*.dmg "$arm64_dmg"
 
+      - name: Inject fix-gatekeeper script into ARM64 DMG
+        run: |
+          set -e
+          VER="${{ needs.version.outputs.semver }}"
+          ARM64_DMG="src-tauri/target/release/bundle/dmg/${APP_NAME}_${VER}_arm64.dmg"
+          MOUNT_POINT="/tmp/pic2webp-arm64"
+          RW_IMG="${ARM64_DMG}.rw.dmg"
+          
+          # Convert to read-write, mount, inject script, convert back
+          hdiutil convert "$ARM64_DMG" -format UDRW -o "$RW_IMG"
+          mkdir -p "$MOUNT_POINT"
+          hdiutil attach "$RW_IMG" -mountpoint "$MOUNT_POINT" -nobrowse
+          
+          cp scripts/fix-gatekeeper.command "$MOUNT_POINT/"
+          chmod +x "$MOUNT_POINT/fix-gatekeeper.command"
+          
+          hdiutil detach "$MOUNT_POINT" -force
+          rm -f "$ARM64_DMG"
+          hdiutil convert "$RW_IMG" -format UDZO -o "$ARM64_DMG"
+          rm -f "$RW_IMG" "$MOUNT_POINT"
+
       # ── Universal DMG (ARM64 + x86_64) ──
       - name: Build frontend
         run: npm run build
@@ -171,9 +192,14 @@ jobs:
           chmod +x "$APP_PATH/Contents/Resources/cwebp"
           codesign --force --deep -s - "$APP_PATH"
           
+          # Place fix-gatekeeper script next to .app in the DMG
+          DMG_DIR="$(dirname "$APP_PATH")"
+          cp scripts/fix-gatekeeper.command "$DMG_DIR/"
+          chmod +x "$DMG_DIR/fix-gatekeeper.command"
+          
           UNIVERSAL_DMG="src-tauri/target/release/bundle/dmg/${APP_NAME}_${VER}_universal.dmg"
           hdiutil create -volname "$APP_NAME" \
-            -srcfolder "$APP_PATH" -ov -format UDZO "$UNIVERSAL_DMG"
+            -srcfolder "$DMG_DIR" -ov -format UDZO "$UNIVERSAL_DMG"
 
       - name: Upload ARM64 DMG
         uses: softprops/action-gh-release@v2
