@@ -72,6 +72,7 @@ header {
   flex-direction: column;
   padding: 12px;
   min-width: 0;
+  position: relative;
 }
 
 .right-panel {
@@ -128,13 +129,20 @@ header {
   flex: 1;
   overflow-y: auto;
   margin: 0 -4px;
+  padding-bottom: 40px;
 }
 
 .empty-state {
   background: var(--surface);
   border-radius: var(--radius);
-  padding: 16px;
+  padding: 20px 20px 24px;
   box-shadow: var(--shadow);
+  margin: 8px 0;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-self: stretch;
 }
 
 .empty-state p {
@@ -307,6 +315,7 @@ input[type="range"].quality-slider {
 }
 
 .hint.warn { color: var(--danger); }
+.dir-hint { color: var(--text2); }
 
 /* Output dir */
 .dir-row {
@@ -419,6 +428,54 @@ input[type="range"].quality-slider {
 .btn-ghost:hover {
   border-color: var(--border);
   background: var(--surface);
+  color: var(--text);
+}
+
+.btn-donate {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #f9731622;
+  border-radius: var(--radius);
+  background: #f9731608;
+  color: var(--text2);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-donate:hover {
+  border-color: #f9731644;
+  background: #f9731615;
+  color: var(--text);
+}
+
+/* Donate footer — fixed at bottom of left panel */
+.donate-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px 8px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  pointer-events: none;
+}
+.donate-footer .btn-donate {
+  padding: 4px 18px;
+  border: 1px solid #f9731622;
+  border-radius: 20px;
+  background: #f9731608;
+  color: var(--text2);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all .15s;
+  pointer-events: auto;
+}
+.donate-footer .btn-donate:hover {
+  border-color: #f9731644;
+  background: #f9731615;
   color: var(--text);
 }
 

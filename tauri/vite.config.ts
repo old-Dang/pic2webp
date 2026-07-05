@@ -8,6 +8,7 @@ export default defineConfig({
   build: {
     outDir: "../dist",
     emptyOutDir: true,
+    cssCodeSplit: false,
   },
   clearScreen: false,
   server: {

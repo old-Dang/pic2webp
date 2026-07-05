@@ -4,7 +4,512 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pic2WebP</title>
-  <link rel="stylesheet" href="/style.css" />
+  <style>
+/* ───────── Reset & Base ───────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f2f2f7;
+  --surface: #ffffff;
+  --border: #e0e0e5;
+  --text: #1c1c1e;
+  --text2: #666668;
+  --text3: #999;
+  --primary: #10b981;
+  --primary-hover: #059669;
+  --danger: #ef4444;
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,.06);
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+html, body {
+  height: 100%;
+  font: 14px/1.5 var(--font);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ───────── Header ───────── */
+header {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  -webkit-app-region: drag;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-text h1 {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.subtitle {
+  font-size: 11px;
+  color: var(--text3);
+}
+
+/* ───────── Main Layout ───────── */
+.main-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.left-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  min-width: 0;
+}
+
+.right-panel {
+  width: 240px;
+  padding: 12px;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ───────── Drop Zone ───────── */
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+
+.dropzone:hover,
+.dropzone.dragover {
+  border-color: var(--primary);
+  background: #ecfdf5;
+}
+
+.dropzone-content svg { margin-bottom: 6px; }
+
+.dropzone-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text2);
+}
+
+.dropzone-hint {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 2px;
+}
+
+/* ───────── File List ───────── */
+.file-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0 4px;
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.file-list {
+  flex: 1;
+  overflow-y: auto;
+  margin: 0 -4px;
+}
+
+.empty-state {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.empty-state p {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.empty-state ul {
+  list-style: none;
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.8;
+}
+
+.empty-state ul li::before {
+  content: "· ";
+  color: var(--primary);
+  font-weight: bold;
+}
+
+/* Per-file card */
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--surface);
+  border-radius: 6px;
+  margin-bottom: 4px;
+  box-shadow: var(--shadow);
+  font-size: 12px;
+}
+
+.file-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: var(--bg);
+  flex-shrink: 0;
+}
+
+.file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-size {
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.file-status {
+  flex-shrink: 0;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.status-pending { color: var(--text3); }
+.status-compressing { color: #f59e0b; background: #fffbeb; }
+.status-converting { color: #3b82f6; background: #eff6ff; }
+.status-done { color: var(--primary); background: #ecfdf5; }
+.status-skipped { color: var(--text3); }
+.status-failed { color: var(--danger); background: #fef2f2; }
+
+/* ───────── Controls ───────── */
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.control-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.slider-end {
+  font-size: 10px;
+  color: var(--text3);
+  white-space: nowrap;
+}
+
+input[type="range"].quality-slider {
+  flex: 1;
+  accent-color: var(--primary);
+  height: 4px;
+  cursor: pointer;
+}
+
+.quality-bar {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.quality-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--danger), #f59e0b, var(--primary));
+  transition: width .15s;
+}
+
+/* Toggle */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.toggle-row input { display: none; }
+
+.toggle-track {
+  width: 34px;
+  height: 20px;
+  background: #d1d5db;
+  border-radius: 10px;
+  position: relative;
+  transition: background .15s;
+  flex-shrink: 0;
+}
+
+.toggle-row input:checked + .toggle-track {
+  background: var(--primary);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  transition: transform .15s;
+  box-shadow: 0 1px 2px rgba(0,0,0,.15);
+}
+
+.toggle-row input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(14px);
+}
+
+.hint {
+  font-size: 10.5px;
+  color: var(--text3);
+  line-height: 1.4;
+}
+
+.hint.warn { color: var(--danger); }
+
+/* Output dir */
+.dir-row {
+  display: flex;
+  gap: 4px;
+}
+
+.dir-input {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  background: var(--bg);
+  cursor: default;
+}
+
+/* Divider */
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 4px 0;
+}
+
+/* Stats */
+.stats-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.stat-label { color: var(--text2); }
+.stat-value { font-weight: 600; }
+.stat-fail { color: var(--danger); }
+.stat-total { margin-top: 2px; padding-top: 4px; border-top: 1px solid var(--border); }
+.stat-saved { color: var(--primary); font-size: 13px; }
+
+/* Tool status */
+.tool-status {
+  font-size: 10.5px;
+  color: var(--text3);
+}
+
+.tool-check {
+  display: block;
+}
+
+/* ───────── Buttons ───────── */
+.btn-primary {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+.btn-secondary {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.btn-secondary:hover { background: var(--bg); }
+
+.btn-text {
+  border: none;
+  background: none;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+}
+
+.btn-text:hover { color: var(--danger); }
+
+.btn-ghost {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text3);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.btn-ghost:hover {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* Spinner */
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ───────── Modal ───────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.modal-overlay.visible {
+  display: flex;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 24px 28px;
+  width: 340px;
+  position: relative;
+  box-shadow: 0 8px 30px rgba(0,0,0,.15);
+}
+
+.modal-close {
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  border: none;
+  background: none;
+  font-size: 22px;
+  color: var(--text3);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.modal h2 { font-size: 17px; margin-bottom: 4px; }
+.modal-hint { font-size: 12px; color: var(--text3); margin-bottom: 14px; }
+
+.qr-row {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.qr-card img {
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.qr-card span {
+  font-size: 11px;
+  color: var(--text2);
+}
+
+/* ───────── Scrollbar ───────── */
+.file-list::-webkit-scrollbar { width: 4px; }
+.file-list::-webkit-scrollbar-thumb { background: #d0d0d5; border-radius: 2px; }
+.file-list::-webkit-scrollbar-track { background: transparent; }
+  </style>
 </head>
 <body>
   <div id="app">
@@ -29,7 +534,6 @@
       <section class="left-panel">
         <!-- Drop zone -->
         <div id="dropzone" class="dropzone">
-          <input type="file" id="file-input" accept=".jpg,.jpeg,.png,.webp" multiple hidden />
           <div class="dropzone-content">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -57,6 +561,12 @@
             </ul>
           </div>
         </div>
+
+        <!-- Donate footer -->
+        <div class="donate-footer">
+          <button id="donate-btn" class="btn-donate">☕ 请作者喝杯奶茶</button>
+        </div>
+
       </section>
 
       <!-- ===== Right: Controls + Stats ===== -->
@@ -101,6 +611,7 @@
             <button id="dir-btn" class="btn-secondary">选择</button>
             <button id="dir-clear" class="btn-text" hidden>×</button>
           </div>
+          <p class="hint dir-hint">不指定时，WebP 与原文件保存在同一目录（可覆盖原文件）</p>
         </div>
 
         <!-- Separator -->
@@ -138,7 +649,6 @@
         </button>
 
         <!-- Donate -->
-        <button id="donate-btn" class="btn-ghost">☕ 请作者喝杯奶茶</button>
       </section>
     </div>
 

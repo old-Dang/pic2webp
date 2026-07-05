@@ -14,7 +14,6 @@ let stats = null;
 const $ = (s) => document.querySelector(s);
 
 const dropzone = $("#dropzone");
-const fileInput = $("#file-input");
 const fileList = $("#file-list");
 const fileCount = $("#file-count");
 const clearBtn = $("#clear-btn");
@@ -272,13 +271,22 @@ dropzone.addEventListener("drop", (e) => {
   }
 });
 
-// File picker
-dropzone.addEventListener("click", () => fileInput.click());
-fileInput.addEventListener("change", async () => {
-  if (fileInput.files.length > 0) {
-    const paths = Array.from(fileInput.files).map((f) => f.path);
-    addFiles(paths);
-    fileInput.value = "";
+// File picker — use Tauri native dialog
+dropzone.addEventListener("click", async () => {
+  try {
+    const result = await open({
+      multiple: true,
+      filters: [
+        { name: "Images", extensions: ["jpg", "jpeg", "png", "webp"] }
+      ]
+    });
+    if (result && Array.isArray(result)) {
+      addFiles(result);
+    } else if (typeof result === "string") {
+      addFiles([result]);
+    }
+  } catch (e) {
+    console.warn("Dialog not available:", e);
   }
 });
 

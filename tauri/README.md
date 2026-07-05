@@ -1,19 +1,34 @@
 # Pic2WebP
 
-跨平台图片转 WebP 工具（Tauri 版）
-
 把 JPG / PNG / WebP 一键压成更小的 WebP，质量 75-85 通常比原图小 25-50%。
+
+macOS 原生桌面工具，Tauri 跨平台，完全离线，无网络请求。
+
+> **[⬇️ 下载最新版](https://github.com/old-Dang/pic2webp/releases)**
 
 ## 特性
 
 - 🖼️ **拖拽即用** — 把图片拖到窗口，剩下交给它
-- 📁 **递归子目录** — 勾上后整棵目录树一并处理
+- 📁 **递归子目录** — 勾上后整棵目录树一并处理，保持原目录结构
 - 🗑️ **删除源文件** — 转换成功可自动清理原图
 - 📊 **实时统计** — 节省了多少 MB、压缩比多少
 - 🎯 **质量可调** — 10-100 滑块，建议 75-85
-- 🛠️ **本地 cwebp 工具链**
+- 🛠️ **本地 cwebp 工具链** — jpegoptim / pngquant / oxipng 可选增强
 - 🔒 **完全离线** — 不发任何网络请求
-- 🍎 **macOS** + 🪟 **Windows** 双平台
+- 🍎 **macOS 14+** · **Windows 10+**
+
+## 下载
+
+前往 [Releases](https://github.com/old-Dang/pic2webp/releases) 下载对应平台的安装包。
+
+| 平台 | 安装包 | 大小 |
+|------|--------|------|
+| macOS (Apple Silicon) | `.dmg` | ~5 MB |
+| Windows (x64) | `.msi` | ~5 MB |
+
+### 首次打开（macOS）
+
+右键点击 App 选「打开」即可（macOS Gatekeeper 安全提示，未签名 App 正常现象）。
 
 ## 开发
 
@@ -46,7 +61,7 @@ registry = "sparse+https://rsproxy.cn/index/"
 ### 启动
 
 ```bash
-cd pic2webp/tauri
+cd tauri
 
 # 安装前端依赖
 npm install
@@ -62,18 +77,8 @@ npm run tauri build
 
 | 平台 | 路径 |
 |---|---|
-| macOS | `src-tauri/target/release/bundle/dmg/Pic2WebP_1.0.0_x64.dmg` |
-| Windows | `src-tauri/target/release/bundle/msi/Pic2WebP_1.0.0_x64.msi` |
-
-## 发布版本
-
-构建时，cwebp 二进制会自动打包进应用：
-
-- **macOS**：`tools/cwebp` → 嵌入 `.app/Contents/Resources/`
-- **Windows**：`tools/cwebp.exe` → 嵌入安装包
-
-Windows 版 `cwebp.exe` 可从 [Google libwebp 发布页](https://github.com/webmproject/libwebp/releases) 下载，
-放到 `tools/` 目录下。
+| macOS | `src-tauri/target/release/bundle/dmg/Pic2WebP_1.1.0_aarch64.dmg` |
+| Windows | `src-tauri/target/release/bundle/msi/Pic2WebP_1.1.0_x64.msi` |
 
 ## 隐私
 
