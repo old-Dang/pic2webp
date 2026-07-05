@@ -72,6 +72,8 @@ fn resolve_tools(app: &AppHandle) -> HashMap<String, Option<String>> {
 
     if let Ok(res_dir) = app.path().resource_dir() {
         search_dirs.push(res_dir);
+        // CR1: also search resource_dir/tools/ (Windows bundle places tools here)
+        search_dirs.push(res_dir.join("tools"));
     }
     if let Ok(exe) = std::env::current_exe() {
         if let Some(parent) = exe.parent() {
