@@ -15,11 +15,15 @@ const $ = (s) => document.querySelector(s);
 
 const dropzone = $("#dropzone");
 const fileList = $("#file-list");
-const fileCount = $("#file-count");
+const fileCount = null; // replaced by fileCountText below
+const fileCountText = $("#file-count-text");
 const clearBtn = $("#clear-btn");
 const qualitySlider = $("#quality-slider");
 const qualityVal = $("#quality-val");
 const qualityFill = $("#quality-fill");
+const preset70 = $("#preset-70");
+const preset80 = $("#preset-80");
+const preset95 = $("#preset-95");
 const chkRecursive = $("#chk-recursive");
 const chkDelete = $("#chk-delete");
 const outputDir = $("#output-dir");
@@ -101,12 +105,12 @@ function renderFiles() {
           <li>Chrome / Edge / Firefox / Safari 全支持</li>
         </ul>
       </div>`;
-    fileCount.textContent = "已选择 0 个文件";
+    fileCountText.textContent = `已选择 ${files.length} 个文件`;
     clearBtn.hidden = true;
     return;
   }
 
-  fileCount.textContent = `已选择 ${files.length} 个文件`;
+  fileCountText.textContent = `已选择 ${files.length} 个文件`;
   clearBtn.hidden = false;
 
   for (const f of files) {
@@ -300,11 +304,25 @@ clearBtn.addEventListener("click", () => {
 });
 
 // Quality slider
-qualitySlider.addEventListener("input", () => {
-  const v = qualitySlider.value;
-  qualityVal.textContent = v;
-  qualityFill.style.width = `${(v - 10) * 100 / 90}%`;
-});
+function setQuality(v) {
+  const val = Math.max(10, Math.min(100, parseInt(v) || 80));
+  qualitySlider.value = val;
+  qualityVal.textContent = val;
+  qualityFill.style.width = `${(val - 10) * 100 / 90}%`;
+  // Update preset button highlight
+  preset70.classList.remove("primary");
+  preset80.classList.remove("primary");
+  preset95.classList.remove("primary");
+  if (val <= 72) preset70.classList.add("primary");
+  else if (val <= 87) preset80.classList.add("primary");
+  else preset95.classList.add("primary");
+}
+
+qualitySlider.addEventListener("input", () => setQuality(qualitySlider.value));
+
+preset70.addEventListener("click", () => setQuality(70));
+preset80.addEventListener("click", () => setQuality(80));
+preset95.addEventListener("click", () => setQuality(95));
 
 // Output dir
 dirBtn.addEventListener("click", async () => {

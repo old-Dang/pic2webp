@@ -4,32 +4,47 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pic2WebP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
 /* ───────── Reset & Base ───────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #f2f2f7;
+  --bg: #f8f8fa;
   --surface: #ffffff;
-  --border: #e0e0e5;
-  --text: #1c1c1e;
-  --text2: #666668;
-  --text3: #999;
-  --primary: #10b981;
-  --primary-hover: #059669;
-  --danger: #ef4444;
+  --band: #f0f0f4;
+  --border: #e4e4ec;
+  --text: #1a1a2e;
+  --text2: #5e5e72;
+  --text3: #9999a8;
+  --primary: #e8792c;
+  --primary-hover: #d45a0a;
+  --primary-light: #fef3ec;
+  --success: #16a34a;
+  --success-light: #f0fdf4;
+  --warning: #f59e0b;
+  --warning-light: #fffbeb;
+  --danger: #dc2626;
+  --danger-light: #fef2f2;
   --radius: 10px;
-  --shadow: 0 1px 3px rgba(0,0,0,.06);
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --radius-sm: 6px;
+  --shadow: 0 1px 3px rgba(26,26,46,.04), 0 1px 2px rgba(26,26,46,.06);
+  --shadow-md: 0 4px 12px rgba(26,26,46,.06), 0 2px 4px rgba(26,26,46,.04);
+  --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 }
 
 html, body {
   height: 100%;
-  font: 14px/1.5 var(--font);
+  font: 13px/1.55 var(--font);
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   user-select: none;
+  overflow: hidden;
 }
 
 #app {
@@ -43,10 +58,12 @@ html, body {
 header {
   display: flex;
   align-items: center;
-  padding: 10px 16px;
+  justify-content: space-between;
+  padding: 10px 18px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   -webkit-app-region: drag;
+  flex-shrink: 0;
 }
 
 .logo {
@@ -56,14 +73,15 @@ header {
 }
 
 .logo-text h1 {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
-  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 .subtitle {
   font-size: 11px;
   color: var(--text3);
+  font-weight: 500;
 }
 
 /* ───────── Main Layout ───────── */
@@ -79,40 +97,59 @@ header {
   flex-direction: column;
   padding: 12px;
   min-width: 0;
+  background: var(--bg);
 }
 
 .right-panel {
-  width: 240px;
-  padding: 12px;
-  border-left: 1px solid var(--border);
+  width: 260px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: 5px;
+  padding: 10px;
+  background: var(--band);
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex-shrink: 0;
 }
 
 /* ───────── Drop Zone ───────── */
 .dropzone {
-  border: 2px dashed var(--border);
+  border: 2px dashed #d4d4dc;
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 16px 20px;
   text-align: center;
   cursor: pointer;
-  transition: all .15s;
+  transition: all .2s ease;
+  background: var(--surface);
   flex-shrink: 0;
 }
 
 .dropzone:hover,
 .dropzone.dragover {
   border-color: var(--primary);
-  background: #ecfdf5;
+  background: var(--primary-light);
 }
 
-.dropzone-content svg { margin-bottom: 6px; }
+.dropzone.dragover {
+  transform: scale(1.005);
+}
+
+.dropzone-icon {
+  margin-bottom: 6px;
+  transition: transform .2s ease;
+}
+
+.dropzone:hover .dropzone-icon {
+  transform: translateY(-2px);
+}
 
 .dropzone-text {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--text2);
+  color: var(--text);
+  letter-spacing: -0.01em;
 }
 
 .dropzone-hint {
@@ -126,63 +163,94 @@ header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 0 4px;
+  padding: 12px 2px 6px;
   font-size: 12px;
   color: var(--text2);
+  font-weight: 500;
+}
+
+.file-count-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  margin-right: 6px;
 }
 
 .file-list {
   flex: 1;
   overflow-y: auto;
-  margin: 0 -4px;
+  padding-bottom: 12px;
+  margin: 0 -2px;
 }
 
 .empty-state {
   background: var(--surface);
   border-radius: var(--radius);
-  padding: 16px;
+  padding: 24px 22px 28px;
   box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.empty-state-icon {
+  margin-bottom: 10px;
+  opacity: 0.4;
 }
 
 .empty-state p {
   font-weight: 600;
-  font-size: 13px;
-  margin-bottom: 6px;
+  font-size: 14px;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
 }
 
 .empty-state ul {
   list-style: none;
   font-size: 12px;
   color: var(--text2);
-  line-height: 1.8;
+  line-height: 2;
 }
 
 .empty-state ul li::before {
-  content: "· ";
-  color: var(--primary);
-  font-weight: bold;
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--primary);
+  margin-right: 8px;
+  vertical-align: middle;
+  opacity: 0.6;
 }
 
 /* Per-file card */
 .file-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
+  gap: 10px;
+  padding: 8px 10px;
   background: var(--surface);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   margin-bottom: 4px;
   box-shadow: var(--shadow);
+  border: 1px solid var(--border);
   font-size: 12px;
+  transition: box-shadow .15s;
+}
+
+.file-item:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .file-thumb {
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
   object-fit: cover;
   background: var(--bg);
   flex-shrink: 0;
+  border: 1px solid var(--border);
 }
 
 .file-info {
@@ -191,46 +259,71 @@ header {
 }
 
 .file-name {
-  font-weight: 500;
+  font-weight: 600;
+  font-family: var(--mono);
+  font-size: 11.5px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--text);
 }
 
 .file-size {
   font-size: 11px;
-  color: var(--text3);
+  color: var(--text2);
+  font-family: var(--mono);
+  margin-top: 1px;
 }
 
 .file-status {
   flex-shrink: 0;
   font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
-.status-pending { color: var(--text3); }
-.status-compressing { color: #f59e0b; background: #fffbeb; }
-.status-converting { color: #3b82f6; background: #eff6ff; }
-.status-done { color: var(--primary); background: #ecfdf5; }
+.status-pending { color: var(--text3); background: var(--bg); }
+.status-compressing { color: #b45309; background: #fffbeb; }
+.status-converting { color: #1d4ed8; background: #eff6ff; }
+.status-done { color: var(--success); background: var(--success-light); }
 .status-skipped { color: var(--text3); }
-.status-failed { color: var(--danger); background: #fef2f2; }
+.status-failed { color: var(--danger); background: var(--danger-light); }
 
 /* ───────── Controls ───────── */
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.section-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text3);
+}
+
 .control-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .control-label {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--text2);
-  display: flex;
-  align-items: center;
-  gap: 4px;
+}
+
+.quality-value {
+  font-weight: 700;
+  color: var(--primary);
+  font-family: var(--mono);
+  font-size: 16px;
+  float: right;
 }
 
 .slider-row {
@@ -240,19 +333,21 @@ header {
 }
 
 .slider-end {
-  font-size: 10px;
+  font-size: 9.5px;
   color: var(--text3);
   white-space: nowrap;
+  font-weight: 500;
 }
 
 input[type="range"].quality-slider {
   flex: 1;
   accent-color: var(--primary);
-  height: 4px;
+  height: 5px;
   cursor: pointer;
+  border-radius: 3px;
 }
 
-.quality-bar {
+.quality-track {
   height: 3px;
   background: var(--border);
   border-radius: 2px;
@@ -262,28 +357,28 @@ input[type="range"].quality-slider {
 .quality-fill {
   height: 100%;
   border-radius: 2px;
-  background: linear-gradient(90deg, var(--danger), #f59e0b, var(--primary));
-  transition: width .15s;
+  background: linear-gradient(90deg, #dc2626 0%, #f59e0b 40%, var(--primary) 100%);
+  transition: width .15s ease;
 }
 
 /* Toggle */
 .toggle-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .toggle-row input { display: none; }
 
 .toggle-track {
-  width: 34px;
-  height: 20px;
-  background: #d1d5db;
-  border-radius: 10px;
+  width: 32px;
+  height: 18px;
+  background: #d4d4dc;
+  border-radius: 9px;
   position: relative;
-  transition: background .15s;
+  transition: background .2s ease;
   flex-shrink: 0;
 }
 
@@ -295,12 +390,12 @@ input[type="range"].quality-slider {
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   background: white;
   border-radius: 50%;
-  transition: transform .15s;
-  box-shadow: 0 1px 2px rgba(0,0,0,.15);
+  transition: transform .2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,.12);
 }
 
 .toggle-row input:checked + .toggle-track .toggle-thumb {
@@ -308,207 +403,273 @@ input[type="range"].quality-slider {
 }
 
 .hint {
-  font-size: 10.5px;
+  font-size: 10px;
   color: var(--text3);
   line-height: 1.4;
+  font-weight: 500;
 }
 
-.hint.warn { color: var(--danger); }
+.hint.warn {
+  color: #b45309;
+  background: #fffbeb;
+  padding: 3px 6px;
+  border-radius: 4px;
+  border: 1px solid #fde68a;
+}
 
-/* Output dir */
 .dir-row {
   display: flex;
   gap: 4px;
+  align-items: center;
 }
 
 .dir-input {
   flex: 1;
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 11px;
-  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 3px 6px;
+  font-size: 10px;
+  background: var(--surface);
+  color: var(--text2);
+  font-family: var(--mono);
   cursor: default;
 }
 
-/* Divider */
 .divider {
   border: none;
   border-top: 1px solid var(--border);
-  margin: 4px 0;
+  margin: 2px 0;
 }
 
 /* Stats */
 .stats-panel {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
+  padding: 10px;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
 }
 
 .stat-row {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
+  align-items: baseline;
+  font-size: 11px;
 }
 
-.stat-label { color: var(--text2); }
-.stat-value { font-weight: 600; }
+.stat-label { color: var(--text2); font-weight: 500; }
+.stat-value { font-weight: 700; font-family: var(--mono); font-size: 12px; }
 .stat-fail { color: var(--danger); }
-.stat-total { margin-top: 2px; padding-top: 4px; border-top: 1px solid var(--border); }
-.stat-saved { color: var(--primary); font-size: 13px; }
+.stat-total { margin-top: 3px; padding-top: 4px; border-top: 1px dashed var(--border); }
+.stat-saved { color: var(--success); font-size: 13px; }
 
 /* Tool status */
 .tool-status {
-  font-size: 10.5px;
+  font-size: 10px;
   color: var(--text3);
-}
-
-.tool-check {
-  display: block;
+  line-height: 1.6;
+  font-weight: 500;
 }
 
 /* ───────── Buttons ───────── */
 .btn-primary {
   width: 100%;
-  padding: 10px;
+  padding: 9px;
   border: none;
   border-radius: var(--radius);
   background: var(--primary);
   color: white;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font);
   cursor: pointer;
-  transition: background .15s;
+  transition: all .15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 6px rgba(232,121,44,.2);
 }
 
-.btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
-.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+  box-shadow: 0 3px 10px rgba(232,121,44,.28);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(232,121,44,.18);
+}
+
+.btn-primary:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+  box-shadow: none;
+}
 
 .btn-secondary {
   padding: 4px 10px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
-  font-size: 11px;
+  font-size: 10px;
+  font-family: var(--font);
+  font-weight: 600;
   cursor: pointer;
   color: var(--text);
+  transition: all .15s;
+  line-height: 1.4;
 }
 
-.btn-secondary:hover { background: var(--bg); }
+.btn-secondary:hover {
+  background: var(--bg);
+  border-color: #c8c8d4;
+}
+
+.btn-secondary.primary {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.btn-secondary.primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
 
 .btn-text {
   border: none;
   background: none;
   color: var(--text3);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11px;
+  font-family: var(--font);
+  font-weight: 500;
   padding: 2px 4px;
+  border-radius: 4px;
+  transition: color .15s;
 }
 
-.btn-text:hover { color: var(--danger); }
+.btn-text:hover { color: var(--primary); background: var(--primary-light); }
 
-.btn-ghost {
+.btn-donate {
   width: 100%;
   padding: 6px;
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  background: none;
-  color: var(--text3);
-  font-size: 12px;
+  border: 1px solid #fde68a;
+  border-radius: var(--radius-sm);
+  background: #fffbeb;
+  color: var(--text2);
+  font-size: 11px;
+  font-family: var(--font);
+  font-weight: 600;
   cursor: pointer;
   transition: all .15s;
 }
 
-.btn-ghost:hover {
-  border-color: var(--border);
-  background: var(--surface);
+.btn-donate:hover {
+  border-color: #fcd34d;
+  background: #fef3c7;
   color: var(--text);
 }
-
-/* Spinner */
-.spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255,255,255,.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin .6s linear infinite;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ───────── Modal ───────── */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.35);
+  background: rgba(26,26,46,.25);
+  backdrop-filter: blur(4px);
   display: none;
   align-items: center;
   justify-content: center;
   z-index: 100;
 }
+
 .modal-overlay.visible {
   display: flex;
 }
 
 .modal {
   background: var(--surface);
-  border-radius: 14px;
-  padding: 24px 28px;
-  width: 340px;
+  border-radius: 16px;
+  padding: 28px 32px;
+  width: 360px;
   position: relative;
-  box-shadow: 0 8px 30px rgba(0,0,0,.15);
+  box-shadow: 0 20px 60px rgba(26,26,46,.12), 0 4px 16px rgba(26,26,46,.08);
 }
 
 .modal-close {
   position: absolute;
-  right: 12px;
-  top: 10px;
+  right: 14px;
+  top: 12px;
   border: none;
-  background: none;
-  font-size: 22px;
+  background: var(--bg);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 16px;
   color: var(--text3);
   cursor: pointer;
-  line-height: 1;
-}
-
-.modal h2 { font-size: 17px; margin-bottom: 4px; }
-.modal-hint { font-size: 12px; color: var(--text3); margin-bottom: 14px; }
-
-.qr-row {
   display: flex;
-  gap: 16px;
+  align-items: center;
   justify-content: center;
+  transition: all .15s;
+  font-weight: 500;
 }
+
+.modal-close:hover {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.modal h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+
+.modal-hint { font-size: 13px; color: var(--text3); margin-bottom: 18px; }
+
+.qr-row { display: flex; gap: 18px; justify-content: center; }
 
 .qr-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   text-align: center;
 }
 
 .qr-card img {
   width: 120px;
   height: 120px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid var(--border);
+  background: var(--bg);
 }
 
-.qr-card span {
-  font-size: 11px;
-  color: var(--text2);
-}
+.qr-card span { font-size: 12px; color: var(--text2); font-weight: 500; }
 
 /* ───────── Scrollbar ───────── */
-.file-list::-webkit-scrollbar { width: 4px; }
-.file-list::-webkit-scrollbar-thumb { background: #d0d0d5; border-radius: 2px; }
+.file-list::-webkit-scrollbar { width: 5px; }
+.file-list::-webkit-scrollbar-thumb { background: #d0d0da; border-radius: 3px; }
 .file-list::-webkit-scrollbar-track { background: transparent; }
+
+/* ───────── Spinner ───────── */
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,.25);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -517,7 +678,7 @@ input[type="range"].quality-slider {
     <header>
       <div class="logo">
         <svg width="28" height="28" viewBox="0 0 100 100" fill="none">
-          <rect width="100" height="100" rx="20" fill="#10b981"/>
+          <rect width="100" height="100" rx="20" fill="#e8792c"/>
           <text x="50" y="62" text-anchor="middle" fill="white" font-size="36" font-weight="bold" font-family="sans-serif">W</text>
           <text x="62" y="38" text-anchor="middle" fill="white" font-size="14" font-weight="600" font-family="sans-serif">P</text>
         </svg>
@@ -535,83 +696,95 @@ input[type="range"].quality-slider {
         <!-- Drop zone -->
         <div id="dropzone" class="dropzone">
           <div class="dropzone-content">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="17 8 12 3 7 8"/>
-              <line x1="12" y1="3" x2="12" y2="15"/>
-            </svg>
+            <div class="dropzone-icon">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#b0b0bc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
             <p class="dropzone-text">拖拽图片到此处</p>
-            <p class="dropzone-hint">或点击选择文件 · JPG / PNG / WebP</p>
+            <p class="dropzone-hint">或点击选择文件 · 支持 JPG / PNG / WebP</p>
           </div>
         </div>
 
         <!-- File list -->
         <div class="file-list-header">
-          <span id="file-count">已选择 0 个文件</span>
+          <span><span class="file-count-dot"></span><span id="file-count-text">已选择 0 个文件</span></span>
           <button id="clear-btn" class="btn-text" hidden>清空</button>
         </div>
         <div id="file-list" class="file-list">
           <div class="empty-state">
-            <p>为什么要用 WebP？</p>
+            <div class="empty-state-icon">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#b0b0bc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </div>
+            <p>为什么选择 WebP</p>
             <ul>
               <li>Google 开发的现代图片格式</li>
-              <li>同等质量下比 JPEG 小 25-35%</li>
-              <li>支持透明通道（替代 PNG）</li>
-              <li>Chrome / Edge / Firefox / Safari 全支持</li>
+              <li>同等画质体积减少 25-50%</li>
+              <li>支持透明通道，替代 PNG</li>
+              <li>Chrome / Edge / Firefox / Safari 全兼容</li>
             </ul>
           </div>
         </div>
-
-        <!-- Donate footer -->
-        <div class="donate-footer">
-          <button id="donate-btn" class="btn-donate">☕ 请作者喝杯奶茶</button>
-        </div>
-
       </section>
 
       <!-- ===== Right: Controls + Stats ===== -->
       <section class="right-panel">
-        <!-- Quality slider -->
-        <div class="control-group">
-          <label class="control-label">质量 <span id="quality-val">80</span></label>
-          <div class="slider-row">
-            <span class="slider-end">小而糊</span>
-            <input type="range" id="quality-slider" class="quality-slider" min="10" max="100" value="80" />
-            <span class="slider-end">大而清</span>
-          </div>
-          <div class="quality-bar">
-            <div class="quality-fill" id="quality-fill" style="width: 70%"></div>
+        <!-- Quality -->
+        <div class="panel-section">
+          <div class="section-label">输出质量</div>
+          <div class="control-group">
+            <label class="control-label">
+              质量 <span class="quality-value" id="quality-val">80</span>
+            </label>
+            <div class="slider-row">
+              <span class="slider-end">小文件</span>
+              <input type="range" id="quality-slider" class="quality-slider" min="10" max="100" value="80" />
+              <span class="slider-end">高质量</span>
+            </div>
+            <div class="quality-track">
+              <div class="quality-fill" id="quality-fill" style="width: 77.8%"></div>
+            </div>
+            <div style="display:flex; gap:4px; margin-top:3px;">
+              <button class="btn-secondary" id="preset-70" style="flex:1; font-size:10px; font-family:var(--mono);">70</button>
+              <button class="btn-secondary primary" id="preset-80" style="flex:1; font-size:10px; font-family:var(--mono);">80</button>
+              <button class="btn-secondary" id="preset-95" style="flex:1; font-size:10px; font-family:var(--mono);">95</button>
+            </div>
           </div>
         </div>
 
         <!-- Options -->
-        <div class="control-group">
+        <div class="panel-section">
+          <div class="section-label">转换选项</div>
           <label class="toggle-row">
             <input type="checkbox" id="chk-recursive" />
             <span class="toggle-track"><span class="toggle-thumb"></span></span>
             <span>递归子目录</span>
           </label>
-          <p class="hint">处理子文件夹内的图片，保持目录结构</p>
-        </div>
+          <p class="hint">处理子文件夹中的图片，保持目录结构</p>
 
-        <div class="control-group">
           <label class="toggle-row">
             <input type="checkbox" id="chk-delete" />
             <span class="toggle-track"><span class="toggle-thumb"></span></span>
-            <span>删除源文件</span>
+            <span>转换后删除源文件</span>
           </label>
-          <p class="hint warn">转换成功后自动删除原图（谨慎！）</p>
+          <p class="hint warn">⚠ 转换成功后自动删除原始文件</p>
         </div>
 
         <!-- Output directory -->
-        <div class="control-group">
-          <label class="control-label">输出目录</label>
+        <div class="panel-section">
+          <div class="section-label">输出目录</div>
           <div class="dir-row">
-            <input type="text" id="output-dir" class="dir-input" readonly placeholder="与源文件相同目录" />
-            <button id="dir-btn" class="btn-secondary">选择</button>
-            <button id="dir-clear" class="btn-text" hidden>×</button>
+            <input type="text" id="output-dir" class="dir-input" readonly placeholder="与源文件同目录" />
+            <button id="dir-btn" class="btn-secondary primary">选择</button>
+            <button id="dir-clear" class="btn-text" hidden>&#x2715;</button>
           </div>
-          <p class="hint dir-hint">不指定时，WebP 与原文件保存在同一目录（可覆盖原文件）</p>
+          <p class="hint">不指定时，WebP 与源文件保存于同一位置，可覆盖原文件</p>
         </div>
 
         <!-- Separator -->
@@ -632,14 +805,14 @@ input[type="range"].quality-slider {
             <span class="stat-value stat-fail" id="stat-fail">0</span>
           </div>
           <div class="stat-row stat-total">
-            <span class="stat-label">节省</span>
-            <span class="stat-value stat-saved" id="stat-saved">-</span>
+            <span class="stat-label">节省空间</span>
+            <span class="stat-value stat-saved" id="stat-saved">—</span>
           </div>
         </div>
 
         <!-- Tool status -->
         <div class="tool-status" id="tool-status">
-          <span class="tool-check" id="tool-cwebp">cwebp · 检查中...</span>
+          正在检查工具链…
         </div>
 
         <!-- Convert button -->
@@ -649,15 +822,16 @@ input[type="range"].quality-slider {
         </button>
 
         <!-- Donate -->
+        <button id="donate-btn" class="btn-donate">请作者喝杯奶茶 ☕</button>
       </section>
     </div>
 
     <!-- ===== Donate modal ===== -->
     <div id="donate-modal" class="modal-overlay">
       <div class="modal">
-        <button id="modal-close" class="modal-close">×</button>
+        <button id="modal-close" class="modal-close">✕</button>
         <h2>请作者喝杯奶茶 🧋</h2>
-        <p class="modal-hint">如果 Pic2WebP 对你有帮助，欢迎打赏支持</p>
+        <p class="modal-hint">如果 Pic2WebP 帮到了你，欢迎随意打赏</p>
         <div class="qr-row">
           <div class="qr-card">
             <img src="/alipay_donate.jpg" alt="支付宝" />
@@ -665,7 +839,7 @@ input[type="range"].quality-slider {
           </div>
           <div class="qr-card">
             <img src="/wechat_donate.jpg" alt="微信" />
-            <span>微信</span>
+            <span>微信支付</span>
           </div>
         </div>
       </div>
