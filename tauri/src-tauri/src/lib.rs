@@ -71,7 +71,7 @@ fn resolve_tools(app: &AppHandle) -> HashMap<String, Option<String>> {
     let mut search_dirs: Vec<PathBuf> = Vec::new();
 
     if let Ok(res_dir) = app.path().resource_dir() {
-        search_dirs.push(res_dir);
+        search_dirs.push(res_dir.clone());
         // CR1: also search resource_dir/tools/ (Windows bundle places tools here)
         search_dirs.push(res_dir.join("tools"));
     }
