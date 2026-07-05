@@ -54,7 +54,7 @@ jobs:
       - name: Rename MSI with tag version
         run: |
           Push-Location src-tauri/target/release/bundle/msi
-          Rename-Item *.msi "${{ env.APP_NAME }}_${{ needs.version.outputs.semver }}_x64_en-US.msi"
+          Rename-Item *.msi "${{ env.APP_NAME }}_${{ needs.version.outputs.semver }}_x64.msi"
           Pop-Location
       - name: Upload MSI to Release
         uses: softprops/action-gh-release@v2
