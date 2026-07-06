@@ -21,3 +21,6 @@ Thumbs.db
 *.dmg
 *.msi
 *.app
+
+# ─── 工具临时文件 ───
+.playwright-cli/

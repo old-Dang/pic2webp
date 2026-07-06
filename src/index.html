@@ -292,7 +292,7 @@ header {
 .panel-section {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .section-label {
@@ -303,13 +303,13 @@ header {
   color: var(--text3);
 }
 
-.control-group {
+.quality-header {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: baseline;
+  justify-content: space-between;
 }
 
-.control-label {
+.quality-label {
   font-size: 11.5px;
   font-weight: 600;
   color: var(--text2);
@@ -319,8 +319,7 @@ header {
   font-weight: 700;
   color: var(--primary);
   font-family: var(--mono);
-  font-size: 16px;
-  float: right;
+  font-size: 15px;
 }
 
 .slider-row {
@@ -344,18 +343,106 @@ input[type="range"].quality-slider {
   border-radius: 3px;
 }
 
-.quality-track {
-  height: 3px;
-  background: var(--border);
-  border-radius: 2px;
-  overflow: hidden;
+/* Toggle */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  font-size: 12px;
 }
 
-.quality-fill {
-  height: 100%;
-  border-radius: 2px;
-  background: linear-gradient(90deg, #dc2626 0%, #f59e0b 40%, var(--primary) 100%);
-  transition: width .15s ease;
+.toggle-row input { display: none; }
+
+.toggle-track {
+  width: 32px;
+  height: 18px;
+  background: #d4d4dc;
+  border-radius: 9px;
+  position: relative;
+  transition: background .2s ease;
+  flex-shrink: 0;
+}
+
+.toggle-row input:checked + .toggle-track {
+  background: var(--primary);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  transition: transform .2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,.12);
+}
+
+.toggle-row input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(14px);
+}
+
+.toggle-group {
+  display: flex;
+  gap: 5px;
+}
+
+/* Pill button group (naming mode) */
+.pill-group {
+  display: flex;
+  gap: 3px;
+}
+
+.pill-btn {
+  flex: 1;
+  padding: 3px 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: 10px;
+  font-family: var(--font);
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text2);
+  transition: all .12s;
+  text-align: center;
+}
+
+.pill-btn:hover {
+  background: var(--bg);
+  border-color: #c8c8d4;
+}
+
+.pill-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.dir-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.dir-input {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px 6px;
+  font-size: 10px;
+  background: var(--surface);
+  color: var(--text2);
+  font-family: var(--mono);
+  cursor: default;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2px 0;
 }
 
 /* Toggle */
@@ -438,36 +525,55 @@ input[type="range"].quality-slider {
   margin: 2px 0;
 }
 
-/* Stats */
+/* Stats — compact single-row */
 .stats-panel {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   gap: 4px;
-  padding: 10px;
+  padding: 6px 10px;
   background: var(--surface);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
 }
 
-.stat-row {
+.stats-panel[hidden] { display: none; }
+
+.stat-item {
   display: flex;
-  justify-content: space-between;
   align-items: baseline;
-  font-size: 11px;
+  gap: 3px;
 }
 
-.stat-label { color: var(--text2); font-weight: 500; }
-.stat-value { font-weight: 700; font-family: var(--mono); font-size: 12px; }
-.stat-fail { color: var(--danger); }
-.stat-total { margin-top: 3px; padding-top: 4px; border-top: 1px dashed var(--border); }
-.stat-saved { color: var(--success); font-size: 13px; }
+.stat-num {
+  font-weight: 700;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text);
+}
+.stat-num.stat-fail { color: var(--danger); }
+.stat-lbl { font-size: 9px; color: var(--text3); font-weight: 500; }
 
-/* Tool status */
+.stat-saved {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+.stat-saved-val {
+  font-weight: 700;
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--success);
+}
+.stat-saved-lbl { font-size: 9px; color: var(--text3); font-weight: 500; }
+
+/* Tool status — compact */
 .tool-status {
-  font-size: 10px;
+  font-size: 9.5px;
   color: var(--text3);
-  line-height: 1.6;
+  line-height: 1.4;
   font-weight: 500;
+  text-align: center;
 }
 
 /* ───────── Buttons ───────── */
@@ -553,24 +659,22 @@ input[type="range"].quality-slider {
 
 .btn-text:hover { color: var(--primary); background: var(--primary-light); }
 
+/* Donate — subtle text link */
 .btn-donate {
   width: 100%;
-  padding: 6px;
-  border: 1px solid #fde68a;
-  border-radius: var(--radius-sm);
-  background: #fffbeb;
-  color: var(--text2);
-  font-size: 11px;
+  padding: 4px;
+  border: none;
+  background: none;
+  color: var(--text3);
+  font-size: 10.5px;
   font-family: var(--font);
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: all .15s;
+  transition: color .15s;
 }
 
 .btn-donate:hover {
-  border-color: #fcd34d;
-  background: #fef3c7;
-  color: var(--text);
+  color: var(--primary);
 }
 
 /* ───────── Modal ───────── */
@@ -667,6 +771,22 @@ input[type="range"].quality-slider {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ───────── Blog link — subtle bottom-left ───────── */
+.blog-link {
+  font-size: 9px;
+  color: var(--text3);
+  text-decoration: none;
+  opacity: .5;
+  transition: opacity .15s, color .15s;
+  padding: 2px 4px;
+  flex-shrink: 0;
+}
+
+.blog-link:hover {
+  opacity: 1;
+  color: var(--primary);
+}
   </style>
 </head>
 <body>
@@ -721,6 +841,7 @@ input[type="range"].quality-slider {
             </ul>
           </div>
         </div>
+        <a class="blog-link" href="https://www.91hym.cn/" target="_blank" rel="noopener">91hym.cn</a>
       </section>
 
       <!-- ===== Right: Controls + Stats ===== -->
@@ -728,23 +849,14 @@ input[type="range"].quality-slider {
         <!-- Quality -->
         <div class="panel-section">
           <div class="section-label">输出质量</div>
-          <div class="control-group">
-            <label class="control-label">
-              质量 <span class="quality-value" id="quality-val">80</span>
-            </label>
-            <div class="slider-row">
-              <span class="slider-end">小文件</span>
-              <input type="range" id="quality-slider" class="quality-slider" min="10" max="100" value="80" />
-              <span class="slider-end">高质量</span>
-            </div>
-            <div class="quality-track">
-              <div class="quality-fill" id="quality-fill" style="width: 77.8%"></div>
-            </div>
-            <div style="display:flex; gap:4px; margin-top:3px;">
-              <button class="btn-secondary" id="preset-70" style="flex:1; font-size:10px; font-family:var(--mono);">70</button>
-              <button class="btn-secondary primary" id="preset-80" style="flex:1; font-size:10px; font-family:var(--mono);">80</button>
-              <button class="btn-secondary" id="preset-95" style="flex:1; font-size:10px; font-family:var(--mono);">95</button>
-            </div>
+          <div class="quality-header">
+            <span class="quality-label">质量</span>
+            <span class="quality-value" id="quality-val">80</span>
+          </div>
+          <div class="slider-row">
+            <span class="slider-end">小文件</span>
+            <input type="range" id="quality-slider" class="quality-slider" min="10" max="100" value="80" />
+            <span class="slider-end">高质量</span>
           </div>
         </div>
 
@@ -756,14 +868,11 @@ input[type="range"].quality-slider {
             <span class="toggle-track"><span class="toggle-thumb"></span></span>
             <span>递归子目录</span>
           </label>
-          <p class="hint">处理子文件夹中的图片，保持目录结构</p>
-
           <label class="toggle-row">
             <input type="checkbox" id="chk-delete" />
             <span class="toggle-track"><span class="toggle-thumb"></span></span>
             <span>转换后删除源文件</span>
           </label>
-          <p class="hint warn">⚠ 转换成功后自动删除原始文件</p>
         </div>
 
         <!-- Output directory -->
@@ -774,40 +883,39 @@ input[type="range"].quality-slider {
             <button id="dir-btn" class="btn-secondary primary">选择</button>
             <button id="dir-clear" class="btn-text" hidden>&#x2715;</button>
           </div>
-          <p class="hint">不指定时，WebP 与源文件保存于同一位置，可覆盖原文件</p>
         </div>
 
-        <!-- Naming mode -->
+        <!-- Naming mode — pill buttons -->
         <div class="panel-section">
           <div class="section-label">命名规则</div>
-          <select id="naming-mode" style="width:100%; border:1px solid var(--border); border-radius:var(--radius-sm); padding:4px 6px; font-size:11px; background:var(--surface); color:var(--text); font-family:var(--font); cursor:pointer;">
-            <option value="overwrite">覆盖原文件</option>
-            <option value="webp-suffix" selected>-webp 后缀</option>
-            <option value="q-suffix">-q{质量} 后缀</option>
-            <option value="ts-suffix">时间戳后缀</option>
-          </select>
+          <div class="pill-group" id="naming-pills">
+            <button class="pill-btn" data-value="overwrite">覆盖</button>
+            <button class="pill-btn active" data-value="webp-suffix">-webp</button>
+            <button class="pill-btn" data-value="q-suffix">-q80</button>
+            <button class="pill-btn" data-value="ts-suffix">时间戳</button>
+          </div>
         </div>
 
         <!-- Separator -->
         <hr class="divider" />
 
-        <!-- Stats -->
+        <!-- Stats — compact single row -->
         <div class="stats-panel" id="stats-panel" hidden>
-          <div class="stat-row">
-            <span class="stat-label">成功</span>
-            <span class="stat-value" id="stat-success">0</span>
+          <div class="stat-item">
+            <span class="stat-num" id="stat-success">0</span>
+            <span class="stat-lbl">成功</span>
           </div>
-          <div class="stat-row">
-            <span class="stat-label">跳过</span>
-            <span class="stat-value" id="stat-skip">0</span>
+          <div class="stat-item">
+            <span class="stat-num" id="stat-skip">0</span>
+            <span class="stat-lbl">跳过</span>
           </div>
-          <div class="stat-row">
-            <span class="stat-label">失败</span>
-            <span class="stat-value stat-fail" id="stat-fail">0</span>
+          <div class="stat-item">
+            <span class="stat-num stat-fail" id="stat-fail">0</span>
+            <span class="stat-lbl">失败</span>
           </div>
-          <div class="stat-row stat-total">
-            <span class="stat-label">节省空间</span>
-            <span class="stat-value stat-saved" id="stat-saved">—</span>
+          <div class="stat-saved">
+            <span class="stat-saved-val" id="stat-saved">—</span>
+            <span class="stat-saved-lbl">节省</span>
           </div>
         </div>
 
@@ -822,7 +930,7 @@ input[type="range"].quality-slider {
           <span id="btn-spinner" class="spinner" hidden></span>
         </button>
 
-        <!-- Donate -->
+        <!-- Donate — subtle text link -->
         <button id="donate-btn" class="btn-donate">请作者喝杯奶茶 ☕</button>
       </section>
     </div>

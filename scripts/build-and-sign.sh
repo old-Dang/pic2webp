@@ -3,6 +3,8 @@
 # Tauri 构建完成后，对 DMG 内的 .app 做 ad-hoc codesign，
 # 消除 Gatekeeper "已损坏，无法打开" 拦截。
 #
+# 注：Tauri v2 创建 DMG 后会自动清理 .app，所以需要从 DMG 中提取 .app
+#
 # 用法: npm run build:release
 
 set -euo pipefail
@@ -36,16 +38,24 @@ if [ -z "$DMG_IN" ]; then
 fi
 echo "✅ 构建产物: $(basename "$DMG_IN")"
 
-# ── Step 3: 先对 .app bundle 做 ad-hoc 签名 ───────────────────
-if [ ! -d "$SIGNED_APP" ]; then
-    echo "❌ 找不到 .app: $SIGNED_APP"
-    exit 1
-fi
+# ── Step 3: 从 DMG 中提取 .app（Tauri v2 构建 DMG 后会清理 .app）──
+echo ""
+echo "📦 从 DMG 提取 .app..."
+EXTRACT_DIR=$(mktemp -d /tmp/pic2webp-extract-XXXXXX)
+hdiutil attach "$DMG_IN" -readonly -nobrowse -mountpoint "$EXTRACT_DIR" -quiet
+mkdir -p "$(dirname "$SIGNED_APP")"
+rm -rf "$SIGNED_APP"
+cp -R "${EXTRACT_DIR}/${APP_NAME}" "$SIGNED_APP"
+hdiutil detach "$EXTRACT_DIR" -quiet
+rm -rf "$EXTRACT_DIR"
+echo "   ✅ 已提取: $SIGNED_APP"
+
+# ── Step 4: 对 .app bundle 做 ad-hoc 签名 ─────────────────────
 echo "🔏 ad-hoc 签名 .app bundle..."
 codesign -s - -fv --deep "$SIGNED_APP" 2>&1
 echo "   $(codesign -dvvv "$SIGNED_APP" 2>&1 | grep "Signature=")"
 
-# ── Step 4: 用已签名的 .app 替换 DMG 里的 .app ───────────────
+# ── Step 5: 用已签名的 .app 替换 DMG 里的 .app ───────────────
 echo ""
 echo "📦 重打包 DMG..."
 echo "   1/4 转为可写格式..."
@@ -65,7 +75,7 @@ rm -rf "$MOUNT_DIR"
 hdiutil convert "$DMG_RW" -format UDZO -o "$DMG_OUT" -quiet
 rm -f "$DMG_RW"
 
-# ── Step 5: 验证 ───────────────────────────────────────────────
+# ── Step 6: 验证 ───────────────────────────────────────────────
 echo ""
 echo "🔍 验证签名..."
 MOUNT_DIR2=$(mktemp -d /tmp/pic2webp-verify-XXXXXX)

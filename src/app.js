@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { invoke, isTauri } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 
@@ -8,6 +8,7 @@ let files = [];
 let selectedDir = null;
 let isConverting = false;
 let stats = null;
+let namingMode = "webp-suffix";
 
 // ─── DOM refs ───────────────────────────────────────────────────────
 
@@ -19,16 +20,12 @@ const fileCountText = $("#file-count-text");
 const clearBtn = $("#clear-btn");
 const qualitySlider = $("#quality-slider");
 const qualityVal = $("#quality-val");
-const qualityFill = $("#quality-fill");
-const preset70 = $("#preset-70");
-const preset80 = $("#preset-80");
-const preset95 = $("#preset-95");
 const chkRecursive = $("#chk-recursive");
 const chkDelete = $("#chk-delete");
 const outputDir = $("#output-dir");
 const dirBtn = $("#dir-btn");
 const dirClear = $("#dir-clear");
-const namingMode = $("#naming-mode");
+const namingPills = $("#naming-pills");
 const convertBtn = $("#convert-btn");
 const btnText = $("#btn-text");
 const btnSpinner = $("#btn-spinner");
@@ -53,6 +50,11 @@ function formatBytes(bytes, decimals = 1) {
 // ─── Tool check ─────────────────────────────────────────────────────
 
 async function checkTools() {
+  if (!isTauri()) {
+    toolStatus.innerHTML = '<span style="color:#10b981">✓</span> WebP 编码 (内置) · <span style="color:#999">浏览器预览模式</span>';
+    updateConvertBtn();
+    return;
+  }
   try {
     const tools = await invoke("check_tools");
     let html = "";
@@ -77,7 +79,6 @@ async function checkTools() {
 
 function addFiles(paths) {
   for (const p of paths) {
-    // Skip invalid paths
     if (!p || typeof p !== "string") continue;
     if (!files.some((f) => f.path === p)) {
       files.push({ path: p, status: "pending", message: "", savedBytes: 0, savedPct: 0 });
@@ -112,7 +113,6 @@ function renderFiles() {
   clearBtn.hidden = false;
 
   for (const f of files) {
-    // Skip malformed entries
     if (!f.path || typeof f.path !== "string") continue;
 
     const item = document.createElement("div");
@@ -171,7 +171,6 @@ function updateStats(s) {
   statSuccess.textContent = s.success_count;
   statSkip.textContent = s.skip_count;
   statFail.textContent = s.fail_count;
-  // saved=0 is valid (quality=100 or all failed), always show it
   statSaved.textContent = formatBytes(s.saved);
 }
 
@@ -192,7 +191,6 @@ function updateConvertBtn() {
     return;
   }
 
-  // Check if any files are still being processed
   const allDone = files.every((f) => f.status === "done" || f.status === "skipped" || f.status === "failed");
   if (allDone && files.length > 0) {
     btnText.textContent = "重新转换";
@@ -211,7 +209,6 @@ async function startConvert() {
   isConverting = true;
   updateConvertBtn();
 
-  // Reset all file statuses
   for (const f of files) {
     f.status = "pending";
     f.message = "";
@@ -220,7 +217,6 @@ async function startConvert() {
   }
   renderFiles();
 
-  // Reset stats
   stats = null;
   statsPanel.hidden = true;
 
@@ -231,12 +227,11 @@ async function startConvert() {
         quality: Math.max(10, Math.min(100, parseInt(qualitySlider.value) || 80)),
         recursive: chkRecursive.checked,
         delete_source: chkDelete.checked,
-        naming_mode: namingMode.value,
+        naming_mode: namingMode,
         output_dir: selectedDir || null,
       },
     });
   } catch (e) {
-    // M6: restore file statuses since conversion never actually started
     for (const f of files) {
       f.status = "pending";
       f.message = "";
@@ -252,7 +247,6 @@ async function startConvert() {
 
 // ─── Event listeners ────────────────────────────────────────────────
 
-// Drag & drop — read files from the DOM event directly
 dropzone.addEventListener("dragover", (e) => {
   e.preventDefault();
   dropzone.classList.add("dragover");
@@ -265,16 +259,14 @@ dropzone.addEventListener("dragleave", () => {
 dropzone.addEventListener("drop", (e) => {
   e.preventDefault();
   dropzone.classList.remove("dragover");
-  // Extract file paths from DataTransfer (works in Tauri WebView on all platforms)
   if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
     const paths = Array.from(e.dataTransfer.files)
       .map((f) => f.path)
-      .filter(Boolean); // drop undefined/null paths
+      .filter(Boolean);
     if (paths.length > 0) addFiles(paths);
   }
 });
 
-// File picker — use Tauri native dialog
 dropzone.addEventListener("click", async () => {
   try {
     const result = await open({
@@ -293,7 +285,6 @@ dropzone.addEventListener("click", async () => {
   }
 });
 
-// Clear
 clearBtn.addEventListener("click", () => {
   files = [];
   stats = null;
@@ -302,26 +293,25 @@ clearBtn.addEventListener("click", () => {
   updateConvertBtn();
 });
 
-// Quality slider
+// Quality slider — update value + q-suffix pill label
 function setQuality(v) {
   const val = Math.max(10, Math.min(100, parseInt(v) || 80));
   qualitySlider.value = val;
   qualityVal.textContent = val;
-  qualityFill.style.width = `${(val - 10) * 100 / 90}%`;
-  // Update preset button highlight
-  preset70.classList.remove("primary");
-  preset80.classList.remove("primary");
-  preset95.classList.remove("primary");
-  if (val <= 72) preset70.classList.add("primary");
-  else if (val <= 87) preset80.classList.add("primary");
-  else preset95.classList.add("primary");
+  const qPill = namingPills.querySelector('[data-value="q-suffix"]');
+  if (qPill) qPill.textContent = `-q${val}`;
 }
 
 qualitySlider.addEventListener("input", () => setQuality(qualitySlider.value));
 
-preset70.addEventListener("click", () => setQuality(70));
-preset80.addEventListener("click", () => setQuality(80));
-preset95.addEventListener("click", () => setQuality(95));
+// Naming mode — pill buttons
+namingPills.querySelectorAll(".pill-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    namingPills.querySelectorAll(".pill-btn").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    namingMode = btn.dataset.value;
+  });
+});
 
 // Output dir
 dirBtn.addEventListener("click", async () => {
@@ -333,7 +323,6 @@ dirBtn.addEventListener("click", async () => {
       dirClear.hidden = false;
     }
   } catch (e) {
-    // Tauri dialog may not be available in dev mode
     console.log("Dialog not available:", e);
   }
 });
@@ -344,15 +333,12 @@ dirClear.addEventListener("click", () => {
   dirClear.hidden = true;
 });
 
-// Convert
 convertBtn.addEventListener("click", startConvert);
 
-// Donate modal
 donateBtn.addEventListener("click", () => { donateModal.classList.add("visible"); });
 modalClose.addEventListener("click", () => { donateModal.classList.remove("visible"); });
 donateModal.addEventListener("click", (e) => { if (e.target === donateModal) donateModal.classList.remove("visible"); });
 
-// Keyboard shortcut: Enter to start (M3: skip when typing in input fields)
 document.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && e.target.tagName !== "INPUT" && !convertBtn.disabled) startConvert();
 });
@@ -380,12 +366,13 @@ async function setupListeners() {
 
 async function init() {
   await checkTools();
+
+  if (!isTauri()) return;
+
   await setupListeners();
 
-  // Handle files dropped from OS (passed via Tauri's drag-drop event)
   await listen("tauri://drag-drop", (event) => {
     const raw = event.payload.paths || [];
-    // Normalize: Tauri v2 might return string[] or [{path: string}, ...]
     const paths = raw.map((p) => (typeof p === "string" ? p : p && p.path)).filter(Boolean);
     if (paths.length > 0) addFiles(paths);
   });
