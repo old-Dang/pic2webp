@@ -15,7 +15,6 @@ const $ = (s) => document.querySelector(s);
 
 const dropzone = $("#dropzone");
 const fileList = $("#file-list");
-const fileCount = null; // replaced by fileCountText below
 const fileCountText = $("#file-count-text");
 const clearBtn = $("#clear-btn");
 const qualitySlider = $("#quality-slider");
@@ -126,7 +125,7 @@ function renderFiles() {
     const ext = name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '');
     const thumbColors = { jpg: '#f59e0b', jpeg: '#f59e0b', png: '#3b82f6', webp: '#10b981' };
     const thumbColor = thumbColors[ext] || '#999';
-    const thumbSrc = `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%224%22 fill=%22${thumbColor}22%22/><text x=%2216%22 y=%2222%22 text-anchor=%22middle%22 fill=%22${thumbColor}%22 font-size=%2211%22 font-weight=%22600%22>${ext.toUpperCase()}</text></svg>`;
+    const thumbSrc = `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%224%22 fill=%22${thumbColor}%22/><text x=%2216%22 y=%2222%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2211%22 font-weight=%22600%22>${ext.toUpperCase()}</text></svg>`;
 
     item.innerHTML = `
       <img class="file-thumb" src="${thumbSrc}" alt="" />
