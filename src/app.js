@@ -56,9 +56,7 @@ async function checkTools() {
   try {
     const tools = await invoke("check_tools");
     let html = "";
-    html += tools.cwebp
-      ? '<span style="color:#10b981">✓</span> cwebp'
-      : '<span style="color:#ef4444">✗</span> cwebp (必需)';
+    html += '<span style="color:#10b981">✓</span> WebP 编码 (内置)';
     html += tools.jpegoptim
       ? ' · <span style="color:#10b981">✓</span> jpegoptim'
       : ' · <span style="color:#999">—</span> jpegoptim';

@@ -12,12 +12,6 @@ cd "$SCRIPT_DIR"
 
 VERSION=$(node -p "require('./package.json').version")
 APP_NAME="Pic2WebP.app"
-DMG_IN="${SCRIPT_DIR}/src-tauri/target/release/bundle/dmg/Pic2WebP_${VERSION}_aarch64.dmg"
-
-# Fallback: arm64 命名
-if [ ! -f "$DMG_IN" ]; then
-    DMG_IN="${SCRIPT_DIR}/src-tauri/target/release/bundle/dmg/Pic2WebP_${VERSION}_arm64.dmg"
-fi
 
 DMG_RW="/tmp/pic2webp-rw.dmg"
 DMG_OUT="/tmp/pic2webp-signed.dmg"
@@ -34,9 +28,10 @@ npm run tauri build
 echo ""
 
 # ── Step 2: 找到 DMG ───────────────────────────────────────────
-if [ ! -f "$DMG_IN" ]; then
-    echo "❌ 找不到 DMG: $DMG_IN"
-    find src-tauri/target/release/bundle/dmg/ -name "*.dmg" 2>/dev/null
+DMG_IN=$(find "${SCRIPT_DIR}/src-tauri/target/release/bundle/dmg/" -name "*.dmg" -type f 2>/dev/null | head -1)
+if [ -z "$DMG_IN" ]; then
+    echo "❌ 找不到 DMG 文件"
+    ls -la src-tauri/target/release/bundle/dmg/ 2>/dev/null || echo "DMG 目录不存在"
     exit 1
 fi
 echo "✅ 构建产物: $(basename "$DMG_IN")"

@@ -13,7 +13,7 @@ macOS 原生桌面工具，Tauri 跨平台，完全离线，无网络请求。
 - 🗑️ **删除源文件** — 转换成功可自动清理原图
 - 📊 **实时统计** — 节省了多少 MB、压缩比多少
 - 🎯 **质量可调** — 10-100 滑块，建议 75-85
-- 🛠️ **本地 cwebp 工具链** — jpegoptim / pngquant / oxipng 可选增强
+- 🛠️ **原生 WebP 编码** — 内置 libwebp，无需安装 cwebp；jpegoptim / pngquant / oxipng 可选增强
 - 🔒 **完全离线** — 不发任何网络请求
 - 🍎 **macOS 14+** · **Windows 10+**
 
@@ -24,7 +24,7 @@ macOS 原生桌面工具，Tauri 跨平台，完全离线，无网络请求。
 | 平台 | 安装包 | 大小 |
 |------|--------|------|
 | macOS (Apple Silicon) | `.dmg` | ~5 MB |
-| Windows (x64) | `.msi` | ~5 MB |
+| Windows (x64) | `.exe` (NSIS) | ~5 MB |
 
 ### 首次打开（macOS）
 
@@ -36,7 +36,6 @@ macOS 原生桌面工具，Tauri 跨平台，完全离线，无网络请求。
 
 - [Rust](https://rustup.rs/) 1.70+
 - [Node.js](https://nodejs.org/) 18+
-- [cwebp](https://developers.google.com/speed/webp/docs/precompiled) （macOS: `brew install webp`）
 - 可选：jpegoptim / pngquant / oxipng（macOS: `brew install`）
 
 ### 国内镜像加速（可选）
@@ -77,8 +76,8 @@ npm run tauri build
 
 | 平台 | 路径 |
 |---|---|
-| macOS | `src-tauri/target/release/bundle/dmg/Pic2WebP_1.1.2_aarch64.dmg` |
-| Windows | `src-tauri/target/release/bundle/msi/Pic2WebP_1.1.2_x64.msi` |
+| macOS | `src-tauri/target/release/bundle/dmg/Pic2WebP_1.2.0_aarch64.dmg` |
+| Windows | `src-tauri/target/release/bundle/nsis/Pic2WebP_1.2.0_x64-setup.exe` |
 
 ## 隐私
 

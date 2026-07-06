@@ -1,14 +1,13 @@
 # 外部工具
 
-## cwebp.exe ✅ 已提供
+## WebP 编码 ✅ 内置
 
-`cwebp.exe` (1.6.0) 已下载到本目录，Windows 打包时自动包含。
+WebP 编码由 Rust 原生 `webp` crate（libwebp 绑定）完成，编译时静态链接，**无需任何外部工具**。
 
-## 可选工具
+## 可选增强工具
 
 | 工具 | macOS | Windows | 作用 |
 |---|---|---|---|
-| **cwebp** | `brew install webp` ✅ | ✅ 已包含 | 核心 WebP 编码器 |
 | **jpegoptim** | `brew install jpegoptim` | 需下载 | JPEG 预压缩（可选） |
 | **pngquant** | `brew install pngquant` | 需下载 | PNG 有损压缩（可选） |
 | **oxipng** | `brew install oxipng` | 需下载 | PNG 无损优化（可选） |

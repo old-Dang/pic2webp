@@ -16,7 +16,7 @@ npm run build:release
 npm run tauri build
 ```
 
-构建产物: `src-tauri/target/release/bundle/dmg/Pic2WebP_<version>_arm64.dmg`
+构建产物: `src-tauri/target/release/bundle/dmg/Pic2WebP_<version>_aarch64.dmg`
 
 ### 签名说明
 
@@ -44,4 +44,5 @@ npm install
 npm run tauri build
 ```
 
-打包前确认 `tools/cwebp.exe` 存在（下载: https://github.com/webmproject/libwebp/releases）
+WebP 编码已内置（libwebp 静态链接），无需下载 cwebp.exe。
+构建产物: `src-tauri/target/release/bundle/nsis/Pic2WebP_<version>_x64-setup.exe`

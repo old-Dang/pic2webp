@@ -8,7 +8,6 @@ use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use image::ImageReader;
-use tempfile::NamedTempFile;
 use tauri::{AppHandle, Emitter, Manager, State};
 
 // ─── Data types ─────────────────────────────────────────────────────
@@ -45,7 +44,6 @@ pub struct ConvertResult {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ToolCheck {
-    pub cwebp: bool,
     pub jpegoptim: bool,
     pub pngquant: bool,
     pub oxipng: bool,
@@ -69,7 +67,7 @@ fn tool_exe_name(name: &str) -> String {
 }
 
 fn resolve_tools(app: &AppHandle) -> HashMap<String, Option<String>> {
-    let tool_names = ["cwebp", "jpegoptim", "pngquant", "oxipng"];
+    let tool_names = ["jpegoptim", "pngquant", "oxipng"];
     let mut map = HashMap::new();
     let mut search_dirs: Vec<PathBuf> = Vec::new();
 
@@ -129,7 +127,6 @@ fn resolve_tools(app: &AppHandle) -> HashMap<String, Option<String>> {
 #[tauri::command]
 fn check_tools(state: State<AppState>) -> ToolCheck {
     ToolCheck {
-        cwebp: state.tool_paths.get("cwebp").and_then(|o| o.as_ref()).is_some(),
         jpegoptim: state.tool_paths.get("jpegoptim").and_then(|o| o.as_ref()).is_some(),
         pngquant: state.tool_paths.get("pngquant").and_then(|o| o.as_ref()).is_some(),
         oxipng: state.tool_paths.get("oxipng").and_then(|o| o.as_ref()).is_some(),
@@ -154,16 +151,9 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
     *converting = true;
 
     // Read tool paths (clone before dropping the lock)
-    let cwebp = state.tool_paths.get("cwebp")
-        .and_then(|o| o.clone());
     let jpegoptim = state.tool_paths.get("jpegoptim").and_then(|o| o.clone());
     let pngquant = state.tool_paths.get("pngquant").and_then(|o| o.clone());
     let oxipng = state.tool_paths.get("oxipng").and_then(|o| o.clone());
-
-    if cwebp.is_none() {
-        bail_and_unlock!(converting, "找不到 cwebp，请确保已安装");
-    }
-    let cwebp = cwebp.unwrap();
 
     let quality = request.quality.clamp(10, 100);
 
@@ -283,7 +273,7 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
 
                     let mut png_cmd = Command::new(tool);
                     // M7: cap at 85 — pngquant compression above 85 is negligible,
-                    // cwebp re-encodes anyway. The min bound follows user quality slider.
+                    // WebP encoder re-encodes anyway. The min bound follows user quality slider.
                     png_cmd.arg("--quality")
                         .arg(format!("{}-100", quality.min(85)))
                         .arg("--force")
@@ -321,75 +311,64 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
                 }
             }   // ← CR2: if-ext-png closes here
 
-            // ── Step 1.5: decode HEIC/AVIF to temp PNG ──
-            // H1: pure-Rust via image/avif — zero external deps, works on all platforms
-            let (temp_png, temp_png_guard) = if ext == "heic" || ext == "heif" || ext == "avif" {
-                emit_progress(&app_handle, src_path, "compressing", "HEIC 解码中...", 0, 0);
-                match decode_heic_avif(src_path) {
-                    Ok((p, guard)) => {
-                        emit_progress(&app_handle, src_path, "compressing", "HEIC 解码完成，正在转换...", 0, 0);
-                        (Some(p), Some(guard))
-                    }
-                    Err(e) => {
-                        stats.fail_count += 1;
-                        emit_progress(&app_handle, src_path, "failed", &e, 0, 0);
-                        let _ = app_handle.emit("convert-stats", &stats);
-                        continue;
-                    }
-                }
-            } else {
-                (None, None)
-            };
-
-            // ── Step 3: convert to WebP (ALL formats, not just PNG) ──
+            // ── Step 3: decode image & encode to WebP (native, no external cwebp) ──
             emit_progress(&app_handle, src_path, "converting", "转换为 WebP...", 0, 0);
 
-            // If HEIC/AVIF was decoded to temp PNG, use that instead of original
-            // String owns its data — no borrow issues with temp_png lifetime
-            let convert_src_owned: Option<String> = temp_png.as_ref()
-                .map(|p| p.to_string_lossy().to_string());
-            let convert_src = convert_src_owned.as_deref()
-                .unwrap_or(src_path);
+            let img = match ImageReader::open(src_path)
+                .map_err(|e| format!("无法打开图片: {}", e))
+                .and_then(|r| r.decode().map_err(|e| format!("解码失败: {}", e)))
+            {
+                Ok(img) => img,
+                Err(e) => {
+                    stats.fail_count += 1;
+                    emit_progress(&app_handle, src_path, "failed", &e, 0, 0);
+                    let _ = app_handle.emit("convert-stats", &stats);
+                    continue;
+                }
+            };
 
-            let mut cwebp_cmd = Command::new(&cwebp);
-            cwebp_cmd.arg("-q").arg(quality.to_string())
-                .arg("-mt").arg("-quiet").arg("-sharp_yuv")
-                .arg(convert_src).arg("-o").arg(&output_str);
-            let (cwebp_code, cwebp_output) = run_cmd_timeout(&mut cwebp_cmd, 180); // CR11: 3min for large images
+            let (w, h) = (img.width(), img.height());
+            let encode_result = if img.color().has_alpha() {
+                let rgba = img.to_rgba8();
+                webp::Encoder::from_rgba(rgba.as_raw(), w, h)
+                    .encode_simple(false, quality as f32)
+            } else {
+                let rgb = img.to_rgb8();
+                webp::Encoder::from_rgb(rgb.as_raw(), w, h)
+                    .encode_simple(false, quality as f32)
+            };
 
-            // Drop temp PNG guard after cwebp finishes — auto-cleans temp file
-            drop(temp_png_guard);
+            match encode_result {
+                Ok(webp_mem) => {
+                    if let Err(e) = std::fs::write(&output_str, &*webp_mem) {
+                        stats.fail_count += 1;
+                        emit_progress(&app_handle, src_path, "failed", &format!("写入失败: {}", e), 0, 0);
+                    } else {
+                        let new_size = webp_mem.len() as i64;
+                        stats.total_converted += new_size;
 
-            if cwebp_code == 0 {
-                let new_size = std::fs::metadata(&output_str).map(|m| m.len() as i64).unwrap_or(0);
-                stats.total_converted += new_size;
+                        let saved_bytes = original_size - new_size;
+                        let saved_pct = if original_size > 0 {
+                            (saved_bytes * 100 / original_size) as i32
+                        } else {
+                            0
+                        };
+                        stats.success_count += 1;
 
-                let saved_bytes = original_size - new_size;
-                let saved_pct = if original_size > 0 {
-                    (saved_bytes * 100 / original_size) as i32
-                } else {
-                    0
-                };
-                stats.success_count += 1;
+                        emit_progress(&app_handle, src_path, "done", &format!("已保存 {} KB", new_size / 1024), saved_bytes, saved_pct);
 
-                emit_progress(&app_handle, src_path, "done", &format!("已保存 {} KB", new_size / 1024), saved_bytes, saved_pct);
-
-                if request.delete_source {
-                    if let Err(e) = std::fs::remove_file(src_path) {
-                        emit_progress(&app_handle, src_path, "done",
-                            &format!("已转换，但删除源文件失败: {}", e), saved_bytes, saved_pct);
+                        if request.delete_source {
+                            if let Err(e) = std::fs::remove_file(src_path) {
+                                emit_progress(&app_handle, src_path, "done",
+                                    &format!("已转换，但删除源文件失败: {}", e), saved_bytes, saved_pct);
+                            }
+                        }
                     }
                 }
-            } else {
-                let short_msg = if cwebp_output.len() > 120 {
-                    format!("{}... (已截断)", &cwebp_output[..120])
-                } else if cwebp_output.is_empty() {
-                    "未知错误".to_string()
-                } else {
-                    cwebp_output
-                };
-                stats.fail_count += 1;
-                emit_progress(&app_handle, src_path, "failed", &short_msg, 0, 0);
+                Err(e) => {
+                    stats.fail_count += 1;
+                    emit_progress(&app_handle, src_path, "failed", &format!("WebP 编码失败: {:?}", e), 0, 0);
+                }
             }
 
             let _ = app_handle.emit("convert-stats", &stats);
@@ -506,30 +485,6 @@ fn emit_progress(app: &AppHandle, file: &str, status: &str, message: &str, saved
         saved_pct,
     };
     let _ = app.emit("convert-progress", &progress);
-}
-
-// ─── HEIC / AVIF decode (pure Rust via image crate) ─────────────────────
-
-/// Decode HEIC or AVIF to a temporary PNG file.
-/// Returns (temp_file_path, NamedTempFile). Caller must keep NamedTempFile alive
-/// until after conversion is done, then drop it to auto-clean.
-fn decode_heic_avif(src_path: &str) -> Result<(PathBuf, NamedTempFile), String> {
-    let reader = ImageReader::open(src_path)
-        .map_err(|e| format!("无法打开图片: {}", e))?;
-
-    let img = reader.decode()
-        .map_err(|e| format!("解码失败（非 HEIC/AVIF 或已损坏）: {}", e))?;
-
-    let tmp = tempfile::Builder::new()
-        .prefix("pic2webp-")
-        .suffix(".png")
-        .tempfile()
-        .map_err(|e| format!("创建临时文件失败: {}", e))?;
-
-    img.write_to(&mut tmp.as_file(), image::ImageFormat::Png)
-        .map_err(|e| format!("写入临时 PNG 失败: {}", e))?;
-
-    Ok((tmp.path().to_path_buf(), tmp))
 }
 
 // ─── App builder ────────────────────────────────────────────────────
