@@ -1,0 +1,23 @@
+# ─── Rust / Tauri ───
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# ─── Node.js ───
+node_modules/
+dist/
+
+# ─── 系统文件 ───
+.DS_Store
+Thumbs.db
+
+# ─── IDE ───
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── 构建产物 ───
+*.dmg
+*.msi
+*.app
