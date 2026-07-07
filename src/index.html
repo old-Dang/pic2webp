@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pic2WebP</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23e8792c'/%3E%3Cstop offset='100%25' stop-color='%23d45a0a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='112' fill='url(%23bg)'/%3E%3Crect x='120' y='96' width='160' height='210' rx='20' fill='white' opacity='0.28'/%3E%3Crect x='232' y='178' width='160' height='210' rx='20' fill='white'/%3E%3Cpath d='M168 306 L168 220 M168 220 L148 244 M168 220 L188 244' fill='none' stroke='white' stroke-width='18' stroke-linecap='round' stroke-linejoin='round' opacity='0.9'/%3E%3Cpath d='M266 296 L292 322 L346 262' fill='none' stroke='%2316a34a' stroke-width='22' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
   <style>
 /* ───────── Reset & Base ───────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -567,15 +568,6 @@ input[type="range"].quality-slider {
 }
 .stat-saved-lbl { font-size: 9px; color: var(--text3); font-weight: 500; }
 
-/* Tool status — compact */
-.tool-status {
-  font-size: 9.5px;
-  color: var(--text3);
-  line-height: 1.4;
-  font-weight: 500;
-  text-align: center;
-}
-
 /* ───────── Buttons ───────── */
 .btn-primary {
   width: 100%;
@@ -794,10 +786,18 @@ input[type="range"].quality-slider {
     <!-- ===== Header ===== -->
     <header>
       <div class="logo">
-        <svg width="28" height="28" viewBox="0 0 100 100" fill="none">
-          <rect width="100" height="100" rx="20" fill="#e8792c"/>
-          <text x="50" y="62" text-anchor="middle" fill="white" font-size="36" font-weight="bold" font-family="sans-serif">W</text>
-          <text x="62" y="38" text-anchor="middle" fill="white" font-size="14" font-weight="600" font-family="sans-serif">P</text>
+        <svg width="28" height="28" viewBox="0 0 512 512" fill="none">
+          <defs>
+            <linearGradient id="headerLogoBg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#e8792c"/>
+              <stop offset="100%" stop-color="#d45a0a"/>
+            </linearGradient>
+          </defs>
+          <rect width="512" height="512" rx="112" fill="url(#headerLogoBg)"/>
+          <rect x="120" y="96" width="160" height="210" rx="20" fill="white" opacity="0.28"/>
+          <rect x="232" y="178" width="160" height="210" rx="20" fill="white"/>
+          <path d="M168 306 L168 220 M168 220 L148 244 M168 220 L188 244" fill="none" stroke="white" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+          <path d="M266 296 L292 322 L346 262" fill="none" stroke="#16a34a" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         <div class="logo-text">
           <h1>Pic2WebP</h1>
@@ -832,16 +832,23 @@ input[type="range"].quality-slider {
         </div>
         <div id="file-list" class="file-list">
           <div class="empty-state">
-            <p>为什么选择 WebP</p>
+            <p>为什么要用 WebP？</p>
             <ul>
               <li>Google 开发的现代图片格式</li>
               <li>同等画质体积减少 25-50%</li>
               <li>支持透明通道，替代 PNG</li>
               <li>Chrome / Edge / Firefox / Safari 全兼容</li>
             </ul>
+            <p style="margin-top:14px">如何实现？</p>
+            <ul>
+              <li>内置 WebP 编码引擎，无需安装任何工具</li>
+              <li>可选 jpegoptim / pngquant 预压缩，进一步减小体积</li>
+              <li>所有处理本地完成，不上传任何文件</li>
+              <li>转换后自动统计节省空间</li>
+            </ul>
           </div>
         </div>
-        <a class="blog-link" href="https://www.91hym.cn/" target="_blank" rel="noopener">91hym.cn</a>
+        <a class="blog-link" id="blog-link" href="https://www.91hym.cn/">博客</a>
       </section>
 
       <!-- ===== Right: Controls + Stats ===== -->
@@ -917,11 +924,6 @@ input[type="range"].quality-slider {
             <span class="stat-saved-val" id="stat-saved">—</span>
             <span class="stat-saved-lbl">节省</span>
           </div>
-        </div>
-
-        <!-- Tool status -->
-        <div class="tool-status" id="tool-status">
-          正在检查工具链…
         </div>
 
         <!-- Convert button -->

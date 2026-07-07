@@ -493,6 +493,7 @@ fn emit_progress(app: &AppHandle, file: &str, status: &str, message: &str, saved
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let tool_paths = resolve_tools(app.handle());
             app.manage(AppState {

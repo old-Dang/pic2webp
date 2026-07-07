@@ -1,6 +1,7 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
+import { openUrl } from "@tauri-apps/plugin-opener";
 
 // ─── State ──────────────────────────────────────────────────────────
 
@@ -34,7 +35,6 @@ const statSuccess = $("#stat-success");
 const statSkip = $("#stat-skip");
 const statFail = $("#stat-fail");
 const statSaved = $("#stat-saved");
-const toolStatus = $("#tool-status");
 const donateBtn = $("#donate-btn");
 const donateModal = $("#donate-modal");
 const modalClose = $("#modal-close");
@@ -51,27 +51,15 @@ function formatBytes(bytes, decimals = 1) {
 
 async function checkTools() {
   if (!isTauri()) {
-    toolStatus.innerHTML = '<span style="color:#10b981">✓</span> WebP 编码 (内置) · <span style="color:#999">浏览器预览模式</span>';
     updateConvertBtn();
     return;
   }
   try {
-    const tools = await invoke("check_tools");
-    let html = "";
-    html += '<span style="color:#10b981">✓</span> WebP 编码 (内置)';
-    html += tools.jpegoptim
-      ? ' · <span style="color:#10b981">✓</span> jpegoptim'
-      : ' · <span style="color:#999">—</span> jpegoptim';
-    html += tools.pngquant
-      ? ' · <span style="color:#10b981">✓</span> pngquant'
-      : ' · <span style="color:#999">—</span> pngquant';
-    html += tools.oxipng
-      ? ' · <span style="color:#10b981">✓</span> oxipng'
-      : ' · <span style="color:#999">—</span> oxipng';
-    toolStatus.innerHTML = html;
+    await invoke("check_tools");
     updateConvertBtn();
   } catch (e) {
-    toolStatus.textContent = "工具检查失败: " + e;
+    console.warn("Tool check failed:", e);
+    updateConvertBtn();
   }
 }
 
@@ -99,9 +87,16 @@ function renderFiles() {
         <p>为什么要用 WebP？</p>
         <ul>
           <li>Google 开发的现代图片格式</li>
-          <li>同等质量下比 JPEG 小 25-35%</li>
-          <li>支持透明通道（替代 PNG）</li>
-          <li>Chrome / Edge / Firefox / Safari 全支持</li>
+          <li>同等画质体积减少 25-50%</li>
+          <li>支持透明通道，替代 PNG</li>
+          <li>Chrome / Edge / Firefox / Safari 全兼容</li>
+        </ul>
+        <p style="margin-top:14px">如何实现？</p>
+        <ul>
+          <li>内置 WebP 编码引擎，无需安装任何工具</li>
+          <li>可选 jpegoptim / pngquant 预压缩，进一步减小体积</li>
+          <li>所有处理本地完成，不上传任何文件</li>
+          <li>转换后自动统计节省空间</li>
         </ul>
       </div>`;
     fileCountText.textContent = `已选择 ${files.length} 个文件`;
@@ -123,7 +118,7 @@ function renderFiles() {
     const ext = name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '');
     const thumbColors = { jpg: '#f59e0b', jpeg: '#f59e0b', png: '#3b82f6', webp: '#10b981' };
     const thumbColor = thumbColors[ext] || '#999';
-    const thumbSrc = `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%224%22 fill=%22${thumbColor}%22/><text x=%2216%22 y=%2222%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2211%22 font-weight=%22600%22>${ext.toUpperCase()}</text></svg>`;
+    const thumbSrc = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="4" fill="' + thumbColor + '"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="11" font-weight="600">' + ext.toUpperCase() + '</text></svg>')}`;
 
     item.innerHTML = `
       <img class="file-thumb" src="${thumbSrc}" alt="" />
@@ -153,7 +148,13 @@ function updateFileProgress(filePath, status, message, savedBytes, savedPct) {
   f.savedBytes = savedBytes;
   f.savedPct = savedPct;
 
-  const item = fileList.querySelector(`[data-path="${CSS.escape(filePath)}"]`);
+  // 不用 CSS.escape（它用于 CSS 标识符，不适合属性值），
+  // 改为遍历查找，兼容 Windows 路径中的反斜杠
+  const items = fileList.querySelectorAll(".file-item");
+  let item = null;
+  for (const el of items) {
+    if (el.dataset.path === filePath) { item = el; break; }
+  }
   if (item) {
     const badge = item.querySelector(".file-status");
     badge.className = `file-status status-${status}`;
@@ -359,6 +360,25 @@ async function setupListeners() {
     isConverting = false;
     updateStats(event.payload);
     updateConvertBtn();
+  });
+}
+
+// ─── Blog link — use opener plugin to open external URL ─────────────
+
+const blogLink = $("#blog-link");
+if (blogLink) {
+  blogLink.addEventListener("click", async (e) => {
+    e.preventDefault();
+    const url = blogLink.getAttribute("href");
+    if (isTauri()) {
+      try {
+        await openUrl(url);
+      } catch (err) {
+        console.warn("Failed to open URL:", err);
+      }
+    } else {
+      window.open(url, "_blank");
+    }
   });
 }
 

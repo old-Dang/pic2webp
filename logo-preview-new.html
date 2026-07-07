@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pic2WebP 新图标预览</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #f8f8fa;
+    color: #1a1a2e;
+    padding: 40px 20px;
+    min-height: 100vh;
+  }
+  h1 { font-size: 24px; text-align: center; margin-bottom: 6px; }
+  .hint { text-align: center; color: #999; font-size: 14px; margin-bottom: 40px; }
+  .section {
+    max-width: 800px;
+    margin: 0 auto 40px;
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.06);
+    border: 1px solid #e4e4ec;
+  }
+  .section-title { font-weight: 700; font-size: 16px; margin-bottom: 24px; }
+  .row { display: flex; align-items: center; gap: 32px; flex-wrap: wrap; }
+  .icon-box { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .icon-box .label { font-size: 11px; color: #999; font-weight: 500; }
+  .compare { display: flex; align-items: center; gap: 48px; flex-wrap: wrap; }
+  .compare-col { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .compare-col .title { font-size: 13px; font-weight: 600; }
+  .compare-col .title.old { color: #999; }
+  .compare-col .title.new { color: #e8792c; }
+  .mock-bar {
+    background: white;
+    border-bottom: 1px solid #e4e4ec;
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 10px 10px 0 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  }
+  .mock-bar .title-text { font-size: 15px; font-weight: 700; }
+  .mock-bar .sub { font-size: 11px; color: #999; }
+  .mock-section {
+    max-width: 500px;
+    margin: 0 auto 40px;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.06);
+    border: 1px solid #e4e4ec;
+  }
+  .mock-body { padding: 20px; background: #f8f8fa; }
+  .mock-dropzone {
+    border: 2px dashed #d4d4dc;
+    border-radius: 10px;
+    padding: 16px 20px;
+    text-align: center;
+    background: white;
+  }
+  .mock-dropzone p { font-size: 13px; font-weight: 600; }
+  .mock-dropzone .sub { font-size: 11px; color: #999; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<h1>Pic2WebP 新图标预览 — 方案 E</h1>
+<p class="hint">大文件→小文件 + 对勾，表达"压缩转换完成"</p>
+
+<!-- 多尺寸展示 -->
+<div class="section">
+  <div class="section-title">各尺寸预览（从 512px 到 16px）</div>
+  <div class="row">
+    <div class="icon-box">
+      <img src="src-tauri/icons/512x512.png" width="128" height="128" style="border-radius:28px; box-shadow:0 4px 12px rgba(0,0,0,.08)" />
+      <span class="label">128px (源 512)</span>
+    </div>
+    <div class="icon-box">
+      <img src="src-tauri/icons/128x128.png" width="64" height="64" style="border-radius:14px; box-shadow:0 2px 6px rgba(0,0,0,.06)" />
+      <span class="label">64px (源 128)</span>
+    </div>
+    <div class="icon-box">
+      <img src="src-tauri/icons/128x128.png" width="48" height="48" style="border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,.06)" />
+      <span class="label">48px</span>
+    </div>
+    <div class="icon-box">
+      <img src="src-tauri/icons/32x32.png" width="32" height="32" style="border-radius:7px; box-shadow:0 1px 3px rgba(0,0,0,.06)" />
+      <span class="label">32px</span>
+    </div>
+    <div class="icon-box">
+      <img src="src-tauri/icons/32x32.png" width="24" height="24" style="border-radius:5px" />
+      <span class="label">24px</span>
+    </div>
+    <div class="icon-box">
+      <img src="src-tauri/icons/32x32.png" width="16" height="16" style="border-radius:3px" />
+      <span class="label">16px (favicon)</span>
+    </div>
+  </div>
+</div>
+
+<!-- 新旧对比 -->
+<div class="section">
+  <div class="section-title">新旧对比</div>
+  <div class="compare">
+    <div class="compare-col">
+      <span class="title old">旧方案</span>
+      <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
+        <rect width="100" height="100" rx="20" fill="#e8792c"/>
+        <text x="50" y="62" text-anchor="middle" fill="white" font-size="36" font-weight="bold" font-family="sans-serif">W</text>
+        <text x="62" y="38" text-anchor="middle" fill="white" font-size="14" font-weight="600" font-family="sans-serif">P</text>
+      </svg>
+      <span style="font-size:11px;color:#999">橙色方块 + WP 文字</span>
+    </div>
+    <div style="font-size:32px;color:#ccc">→</div>
+    <div class="compare-col">
+      <span class="title new">新方案 E</span>
+      <img src="src-tauri/icons/128x128.png" width="80" height="80" style="border-radius:18px; box-shadow:0 4px 12px rgba(0,0,0,.08)" />
+      <span style="font-size:11px;color:#999">大→小文件 + 对勾</span>
+    </div>
+  </div>
+</div>
+
+<!-- 模拟应用标题栏 -->
+<div class="mock-section">
+  <div class="section-title" style="text-align:center;margin-bottom:16px">模拟应用标题栏（实际效果）</div>
+  <div class="mock-bar">
+    <img src="src-tauri/icons/32x32.png" width="28" height="28" style="border-radius:6px" />
+    <div>
+      <div class="title-text">Pic2WebP</div>
+      <div class="sub">图片转 WebP · 免费 · 本地处理</div>
+    </div>
+  </div>
+  <div class="mock-body">
+    <div class="mock-dropzone">
+      <p>拖拽图片到此处</p>
+      <p class="sub">或点击选择文件 · 支持 JPG / PNG / WebP / HEIC / AVIF</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
