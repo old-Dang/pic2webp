@@ -2,6 +2,7 @@ import { invoke, isTauri } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { initLang, getLang, toggleLang, t, translateBackendMessage } from "./i18n.js";
 
 // ─── State ──────────────────────────────────────────────────────────
 
@@ -38,6 +39,9 @@ const statSaved = $("#stat-saved");
 const donateBtn = $("#donate-btn");
 const donateModal = $("#donate-modal");
 const modalClose = $("#modal-close");
+const langToggle = $("#lang-toggle");
+const langZh = $("#lang-zh");
+const langEn = $("#lang-en");
 
 // ─── Format helpers ─────────────────────────────────────────────────
 
@@ -84,27 +88,27 @@ function renderFiles() {
   if (files.length === 0) {
     fileList.innerHTML = `
       <div class="empty-state">
-        <p>为什么要用 WebP？</p>
+        <p data-i18n="why-webp">${t("why-webp")}</p>
         <ul>
-          <li>Google 开发的现代图片格式</li>
-          <li>同等画质体积减少 25-50%</li>
-          <li>支持透明通道，替代 PNG</li>
-          <li>Chrome / Edge / Firefox / Safari 全兼容</li>
+          <li data-i18n="why-1">${t("why-1")}</li>
+          <li data-i18n="why-2">${t("why-2")}</li>
+          <li data-i18n="why-3">${t("why-3")}</li>
+          <li data-i18n="why-4">${t("why-4")}</li>
         </ul>
-        <p style="margin-top:14px">如何实现？</p>
+        <p style="margin-top:14px" data-i18n="how-title">${t("how-title")}</p>
         <ul>
-          <li>内置 WebP 编码引擎，无需安装任何工具</li>
-          <li>可选 jpegoptim / pngquant 预压缩，进一步减小体积</li>
-          <li>所有处理本地完成，不上传任何文件</li>
-          <li>转换后自动统计节省空间</li>
+          <li data-i18n="how-1">${t("how-1")}</li>
+          <li data-i18n="how-2">${t("how-2")}</li>
+          <li data-i18n="how-3">${t("how-3")}</li>
+          <li data-i18n="how-4">${t("how-4")}</li>
         </ul>
       </div>`;
-    fileCountText.textContent = `已选择 ${files.length} 个文件`;
+    fileCountText.textContent = t("file-count", { n: files.length });
     clearBtn.hidden = true;
     return;
   }
 
-  fileCountText.textContent = `已选择 ${files.length} 个文件`;
+  fileCountText.textContent = t("file-count", { n: files.length });
   clearBtn.hidden = false;
 
   for (const f of files) {
@@ -124,7 +128,7 @@ function renderFiles() {
       <img class="file-thumb" src="${thumbSrc}" alt="" />
       <div class="file-info">
         <div class="file-name" title="${name}">${name}</div>
-        <div class="file-size">${f.savedBytes > 0 ? `节省 ${formatBytes(f.savedBytes)}` : f.message || ""}</div>
+        <div class="file-size">${f.savedBytes > 0 ? t("saved-bytes", { size: formatBytes(f.savedBytes) }) : translateBackendMessage(f.message) || ""}</div>
       </div>
       <span class="file-status status-${f.status}">${statusLabel(f.status)}</span>
     `;
@@ -134,7 +138,14 @@ function renderFiles() {
 }
 
 function statusLabel(s) {
-  const m = { pending: "等待中", compressing: "压缩中", converting: "转换中", done: "完成", skipped: "跳过", failed: "失败" };
+  const m = {
+    pending: t("status-pending"),
+    compressing: t("status-compressing"),
+    converting: t("status-converting"),
+    done: t("status-done"),
+    skipped: t("status-skipped"),
+    failed: t("status-failed"),
+  };
   return m[s] || s;
 }
 
@@ -160,7 +171,7 @@ function updateFileProgress(filePath, status, message, savedBytes, savedPct) {
     badge.className = `file-status status-${status}`;
     badge.textContent = statusLabel(status);
     const size = item.querySelector(".file-size");
-    size.textContent = savedBytes > 0 ? `节省 ${formatBytes(savedBytes)}` : message || "";
+    size.textContent = savedBytes > 0 ? t("saved-bytes", { size: formatBytes(savedBytes) }) : translateBackendMessage(message) || "";
   }
 }
 
@@ -180,7 +191,7 @@ function updateStats(s) {
 function updateConvertBtn() {
   if (isConverting) {
     convertBtn.disabled = true;
-    btnText.textContent = "转换中...";
+    btnText.textContent = t("converting");
     btnSpinner.hidden = false;
     return;
   }
@@ -188,15 +199,15 @@ function updateConvertBtn() {
 
   if (files.length === 0) {
     convertBtn.disabled = true;
-    btnText.textContent = "开始转换";
+    btnText.textContent = t("start-convert");
     return;
   }
 
   const allDone = files.every((f) => f.status === "done" || f.status === "skipped" || f.status === "failed");
   if (allDone && files.length > 0) {
-    btnText.textContent = "重新转换";
+    btnText.textContent = t("re-convert");
   } else {
-    btnText.textContent = "开始转换";
+    btnText.textContent = t("start-convert");
   }
 
   convertBtn.disabled = false;
@@ -242,7 +253,7 @@ async function startConvert() {
     renderFiles();
     isConverting = false;
     updateConvertBtn();
-    alert("启动转换失败: " + e);
+    alert(t("convert-failed") + ": " + e);
   }
 }
 
@@ -317,7 +328,7 @@ namingPills.querySelectorAll(".pill-btn").forEach((btn) => {
 // Output dir
 dirBtn.addEventListener("click", async () => {
   try {
-    const dir = await open({ directory: true, title: "选择输出目录" });
+    const dir = await open({ directory: true, title: t("select-output-dir") });
     if (dir) {
       selectedDir = dir;
       outputDir.value = dir;
@@ -382,9 +393,36 @@ if (blogLink) {
   });
 }
 
+// ─── Language toggle ─────────────────────────────────────────────────
+
+function updateLangToggle() {
+  const lang = getLang();
+  langZh.classList.toggle("active", lang === "zh");
+  langEn.classList.toggle("active", lang === "en");
+}
+
+if (langToggle) {
+  langToggle.addEventListener("click", () => {
+    toggleLang();
+    updateLangToggle();
+    // Re-render file list to update dynamic text
+    renderFiles();
+    updateConvertBtn();
+  });
+}
+
 // ─── Init ────────────────────────────────────────────────────────────
 
 async function init() {
+  initLang();
+  updateLangToggle();
+
+  // Re-render on language change (for dynamic content not covered by applyLang)
+  window.addEventListener("lang-changed", () => {
+    renderFiles();
+    updateConvertBtn();
+  });
+
   await checkTools();
 
   if (!isTauri()) return;

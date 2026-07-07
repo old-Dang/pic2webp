@@ -779,6 +779,40 @@ input[type="range"].quality-slider {
   opacity: 1;
   color: var(--primary);
 }
+
+/* ───────── Language toggle ───────── */
+.lang-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+
+.lang-toggle:hover {
+  border-color: var(--primary);
+}
+
+.lang-toggle span {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 16px;
+  color: var(--text3);
+  transition: all .15s;
+  letter-spacing: 0.02em;
+}
+
+.lang-toggle span.active {
+  background: var(--primary);
+  color: white;
+}
   </style>
 </head>
 <body>
@@ -801,8 +835,12 @@ input[type="range"].quality-slider {
         </svg>
         <div class="logo-text">
           <h1>Pic2WebP</h1>
-          <span class="subtitle">图片转 WebP · 免费 · 本地处理</span>
+          <span class="subtitle" data-i18n="subtitle">图片转 WebP · 免费 · 本地处理</span>
         </div>
+      </div>
+      <div class="lang-toggle" id="lang-toggle">
+        <span id="lang-zh" class="active">中</span>
+        <span id="lang-en">EN</span>
       </div>
     </header>
 
@@ -820,86 +858,86 @@ input[type="range"].quality-slider {
                 <line x1="12" y1="3" x2="12" y2="15"/>
               </svg>
             </div>
-            <p class="dropzone-text">拖拽图片到此处</p>
-            <p class="dropzone-hint">或点击选择文件 · 支持 JPG / PNG / WebP / HEIC / AVIF</p>
+            <p class="dropzone-text" data-i18n="dropzone-text">拖拽图片到此处</p>
+            <p class="dropzone-hint" data-i18n="dropzone-hint">或点击选择文件 · 支持 JPG / PNG / WebP / HEIC / AVIF</p>
           </div>
         </div>
 
         <!-- File list -->
         <div class="file-list-header">
-          <span><span class="file-count-dot"></span><span id="file-count-text">已选择 0 个文件</span></span>
-          <button id="clear-btn" class="btn-text" hidden>清空</button>
+          <span><span class="file-count-dot"></span><span id="file-count-text" data-i18n="file-count" data-i18n-params='{"n":0}'>已选择 0 个文件</span></span>
+          <button id="clear-btn" class="btn-text" hidden data-i18n="clear">清空</button>
         </div>
         <div id="file-list" class="file-list">
           <div class="empty-state">
-            <p>为什么要用 WebP？</p>
+            <p data-i18n="why-webp">为什么要用 WebP？</p>
             <ul>
-              <li>Google 开发的现代图片格式</li>
-              <li>同等画质体积减少 25-50%</li>
-              <li>支持透明通道，替代 PNG</li>
-              <li>Chrome / Edge / Firefox / Safari 全兼容</li>
+              <li data-i18n="why-1">Google 开发的现代图片格式</li>
+              <li data-i18n="why-2">同等画质体积减少 25-50%</li>
+              <li data-i18n="why-3">支持透明通道，替代 PNG</li>
+              <li data-i18n="why-4">Chrome / Edge / Firefox / Safari 全兼容</li>
             </ul>
-            <p style="margin-top:14px">如何实现？</p>
+            <p style="margin-top:14px" data-i18n="how-title">如何实现？</p>
             <ul>
-              <li>内置 WebP 编码引擎，无需安装任何工具</li>
-              <li>可选 jpegoptim / pngquant 预压缩，进一步减小体积</li>
-              <li>所有处理本地完成，不上传任何文件</li>
-              <li>转换后自动统计节省空间</li>
+              <li data-i18n="how-1">内置 WebP 编码引擎，无需安装任何工具</li>
+              <li data-i18n="how-2">可选 jpegoptim / pngquant 预压缩，进一步减小体积</li>
+              <li data-i18n="how-3">所有处理本地完成，不上传任何文件</li>
+              <li data-i18n="how-4">转换后自动统计节省空间</li>
             </ul>
           </div>
         </div>
-        <a class="blog-link" id="blog-link" href="https://www.91hym.cn/">博客</a>
+        <a class="blog-link" id="blog-link" href="https://www.91hym.cn/" data-i18n="blog">博客</a>
       </section>
 
       <!-- ===== Right: Controls + Stats ===== -->
       <section class="right-panel">
         <!-- Quality -->
         <div class="panel-section">
-          <div class="section-label">输出质量</div>
+          <div class="section-label" data-i18n="output-quality">输出质量</div>
           <div class="quality-header">
-            <span class="quality-label">质量</span>
+            <span class="quality-label" data-i18n="quality">质量</span>
             <span class="quality-value" id="quality-val">80</span>
           </div>
           <div class="slider-row">
-            <span class="slider-end">小文件</span>
+            <span class="slider-end" data-i18n="small-file">小文件</span>
             <input type="range" id="quality-slider" class="quality-slider" min="10" max="100" value="80" />
-            <span class="slider-end">高质量</span>
+            <span class="slider-end" data-i18n="high-quality">高质量</span>
           </div>
         </div>
 
         <!-- Options -->
         <div class="panel-section">
-          <div class="section-label">转换选项</div>
+          <div class="section-label" data-i18n="convert-options">转换选项</div>
           <label class="toggle-row">
             <input type="checkbox" id="chk-recursive" />
             <span class="toggle-track"><span class="toggle-thumb"></span></span>
-            <span>递归子目录</span>
+            <span data-i18n="recursive">递归子目录</span>
           </label>
           <label class="toggle-row">
             <input type="checkbox" id="chk-delete" />
             <span class="toggle-track"><span class="toggle-thumb"></span></span>
-            <span>转换后删除源文件</span>
+            <span data-i18n="delete-source">转换后删除源文件</span>
           </label>
         </div>
 
         <!-- Output directory -->
         <div class="panel-section">
-          <div class="section-label">输出目录</div>
+          <div class="section-label" data-i18n="output-dir">输出目录</div>
           <div class="dir-row">
-            <input type="text" id="output-dir" class="dir-input" readonly placeholder="与源文件同目录" />
-            <button id="dir-btn" class="btn-secondary primary">选择</button>
+            <input type="text" id="output-dir" class="dir-input" readonly placeholder="与源文件同目录" data-i18n-placeholder="same-dir" />
+            <button id="dir-btn" class="btn-secondary primary" data-i18n="select">选择</button>
             <button id="dir-clear" class="btn-text" hidden>&#x2715;</button>
           </div>
         </div>
 
         <!-- Naming mode — pill buttons -->
         <div class="panel-section">
-          <div class="section-label">命名规则</div>
+          <div class="section-label" data-i18n="naming-rule">命名规则</div>
           <div class="pill-group" id="naming-pills">
-            <button class="pill-btn" data-value="overwrite">覆盖</button>
+            <button class="pill-btn" data-value="overwrite" data-i18n="overwrite">覆盖</button>
             <button class="pill-btn active" data-value="webp-suffix">-webp</button>
             <button class="pill-btn" data-value="q-suffix">-q80</button>
-            <button class="pill-btn" data-value="ts-suffix">时间戳</button>
+            <button class="pill-btn" data-value="ts-suffix" data-i18n="timestamp">时间戳</button>
           </div>
         </div>
 
@@ -910,30 +948,30 @@ input[type="range"].quality-slider {
         <div class="stats-panel" id="stats-panel" hidden>
           <div class="stat-item">
             <span class="stat-num" id="stat-success">0</span>
-            <span class="stat-lbl">成功</span>
+            <span class="stat-lbl" data-i18n="success">成功</span>
           </div>
           <div class="stat-item">
             <span class="stat-num" id="stat-skip">0</span>
-            <span class="stat-lbl">跳过</span>
+            <span class="stat-lbl" data-i18n="skip">跳过</span>
           </div>
           <div class="stat-item">
             <span class="stat-num stat-fail" id="stat-fail">0</span>
-            <span class="stat-lbl">失败</span>
+            <span class="stat-lbl" data-i18n="fail">失败</span>
           </div>
           <div class="stat-saved">
             <span class="stat-saved-val" id="stat-saved">—</span>
-            <span class="stat-saved-lbl">节省</span>
+            <span class="stat-saved-lbl" data-i18n="saved">节省</span>
           </div>
         </div>
 
         <!-- Convert button -->
         <button id="convert-btn" class="btn-primary" disabled>
-          <span id="btn-text">开始转换</span>
+          <span id="btn-text" data-i18n="start-convert">开始转换</span>
           <span id="btn-spinner" class="spinner" hidden></span>
         </button>
 
         <!-- Donate — subtle text link -->
-        <button id="donate-btn" class="btn-donate">请作者喝杯奶茶 ☕</button>
+        <button id="donate-btn" class="btn-donate" data-i18n="donate-btn">请作者喝杯奶茶 ☕</button>
       </section>
     </div>
 
@@ -941,16 +979,16 @@ input[type="range"].quality-slider {
     <div id="donate-modal" class="modal-overlay">
       <div class="modal">
         <button id="modal-close" class="modal-close">✕</button>
-        <h2>请作者喝杯奶茶 🧋</h2>
-        <p class="modal-hint">如果 Pic2WebP 帮到了你，欢迎随意打赏</p>
+        <h2 data-i18n="donate-title">请作者喝杯奶茶 🧋</h2>
+        <p class="modal-hint" data-i18n="donate-hint">如果 Pic2WebP 帮到了你，欢迎随意打赏</p>
         <div class="qr-row">
           <div class="qr-card">
             <img src="/alipay_donate.jpg" alt="支付宝" />
-            <span>支付宝</span>
+            <span data-i18n="alipay">支付宝</span>
           </div>
           <div class="qr-card">
             <img src="/wechat_donate.jpg" alt="微信" />
-            <span>微信支付</span>
+            <span data-i18n="wechat-pay">微信支付</span>
           </div>
         </div>
       </div>
