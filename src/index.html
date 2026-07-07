@@ -295,7 +295,7 @@ header {
 .status-compressing { color: #b45309; background: #fffbeb; }
 .status-converting { color: #1d4ed8; background: #eff6ff; }
 .status-done { color: var(--success); background: var(--success-light); }
-.status-skipped { color: var(--text3); }
+.status-skipped { color: var(--text3); background: var(--bg); border: 1px dashed var(--border); }
 .status-failed { color: var(--danger); background: var(--danger-light); }
 
 /* ───────── Controls ───────── */
@@ -478,6 +478,16 @@ input[type="range"].quality-slider {
 }
 
 .stats-panel[hidden] { display: none; }
+
+.stats-panel.pulse {
+  animation: statsPulse 1s ease;
+}
+
+@keyframes statsPulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(22,163,74,.3); }
+  50% { transform: scale(1.03); box-shadow: 0 0 0 6px rgba(22,163,74,0); }
+  100% { transform: scale(1); }
+}
 
 .stat-item {
   display: flex;

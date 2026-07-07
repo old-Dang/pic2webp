@@ -90,14 +90,17 @@ const dict = {
     "alipay": "支付宝",
     "wechat-pay": "微信支付",
 
-    // Backend message overrides (maps Rust message to localized)
-    "msg-jpeg-precompress": "JPEG 预压缩...",
-    "msg-png-precompress": "PNG 预压缩...",
+    // Backend message overrides (maps Rust message codes to localized)
+    "msg-precompress-jpeg": "JPEG 预压缩...",
+    "msg-precompress-png": "PNG 预压缩...",
     "msg-converting": "转换为 WebP...",
     "msg-saved": "已保存 {n} KB",
+    "msg-skipped": "WebP 未更小，已跳过",
     "msg-write-fail": "写入失败: {e}",
     "msg-delete-fail": "已转换，但删除源文件失败: {e}",
     "msg-encode-fail": "WebP 编码失败: {e}",
+    "msg-open-fail": "无法打开图片: {e}",
+    "msg-decode-fail": "解码失败: {e}",
   },
 
   en: {
@@ -190,13 +193,16 @@ const dict = {
     "wechat-pay": "WeChat Pay",
 
     // Backend message overrides
-    "msg-jpeg-precompress": "Pre-compressing JPEG...",
-    "msg-png-precompress": "Pre-compressing PNG...",
+    "msg-precompress-jpeg": "Pre-compressing JPEG...",
+    "msg-precompress-png": "Pre-compressing PNG...",
     "msg-converting": "Converting to WebP...",
     "msg-saved": "Saved {n} KB",
+    "msg-skipped": "WebP not smaller, skipped",
     "msg-write-fail": "Write failed: {e}",
     "msg-delete-fail": "Converted, but failed to delete source: {e}",
     "msg-encode-fail": "WebP encoding failed: {e}",
+    "msg-open-fail": "Cannot open image: {e}",
+    "msg-decode-fail": "Decode failed: {e}",
   },
 };
 
@@ -287,15 +293,18 @@ export function applyLang() {
 export function translateBackendMessage(message) {
   if (!message) return "";
 
-  // Try to match known patterns
+  // Match backend message codes (English codes sent from Rust)
   const patterns = [
-    { regex: /^JPEG 预压缩\.\.\.$/, key: "msg-jpeg-precompress" },
-    { regex: /^PNG 预压缩\.\.\.$/, key: "msg-png-precompress" },
-    { regex: /^转换为 WebP\.\.\.$/, key: "msg-converting" },
-    { regex: /^已保存 (\d+) KB$/, key: "msg-saved", extract: (m) => ({ n: m[1] }) },
-    { regex: /^写入失败: (.+)$/, key: "msg-write-fail", extract: (m) => ({ e: m[1] }) },
-    { regex: /^已转换，但删除源文件失败: (.+)$/, key: "msg-delete-fail", extract: (m) => ({ e: m[1] }) },
-    { regex: /^WebP 编码失败: (.+)$/, key: "msg-encode-fail", extract: (m) => ({ e: m[1] }) },
+    { regex: /^precompress_jpeg$/, key: "msg-precompress-jpeg" },
+    { regex: /^precompress_png$/, key: "msg-precompress-png" },
+    { regex: /^converting$/, key: "msg-converting" },
+    { regex: /^skipped$/, key: "msg-skipped" },
+    { regex: /^saved:(\d+)kb$/, key: "msg-saved", extract: (m) => ({ n: m[1] }) },
+    { regex: /^write_fail:(.+)$/, key: "msg-write-fail", extract: (m) => ({ e: m[1] }) },
+    { regex: /^encode_fail:(.+)$/, key: "msg-encode-fail", extract: (m) => ({ e: m[1] }) },
+    { regex: /^open_fail:(.+)$/, key: "msg-open-fail", extract: (m) => ({ e: m[1] }) },
+    { regex: /^decode_fail:(.+)$/, key: "msg-decode-fail", extract: (m) => ({ e: m[1] }) },
+    { regex: /^delete_fail:(.+)$/, key: "msg-delete-fail", extract: (m) => ({ e: m[1] }) },
   ];
 
   for (const p of patterns) {

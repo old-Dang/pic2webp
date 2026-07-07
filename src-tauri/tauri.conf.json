@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Pic2WebP - 图片转 WebP",
+        "title": "Pic2WebP",
         "width": 800,
         "height": 620,
         "minWidth": 720,

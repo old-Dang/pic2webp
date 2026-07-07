@@ -153,7 +153,7 @@ macro_rules! bail_and_unlock {
 fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest) -> Result<(), String> {
     let mut converting = state.is_converting.lock().map_err(|e| e.to_string())?;
     if *converting {
-        return Err("已经在转换中".into());
+        return Err("ERR_ALREADY_CONVERTING".into());
     }
     *converting = true;
 
@@ -198,7 +198,7 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
     all_files.retain(|f| seen.insert(f.clone()));
 
     if all_files.is_empty() {
-        bail_and_unlock!(converting, "没有找到支持的图片文件");
+        bail_and_unlock!(converting, "ERR_NO_FILES");
     }
 
     let mut stats = ConvertResult {
@@ -255,7 +255,7 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
 
             // ── Step 1: pre-compress JPEG ──
             if (ext == "jpg" || ext == "jpeg") && jpegoptim.is_some() {
-                emit_progress(&app_handle, src_path, "compressing", "JPEG 预压缩...", 0, 0);
+                emit_progress(&app_handle, src_path, "compressing", "precompress_jpeg", 0, 0);
                 let mut cmd = Command::new(jpegoptim.as_ref().unwrap());
                 cmd.arg("--strip-all").arg("--all-normal").arg(src_path);
                 run_cmd_timeout(&mut cmd, 60); // CR11: 60s for jpegoptim
@@ -263,7 +263,7 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
 
             // ── Step 2: pre-compress PNG ──
             if ext == "png" {
-                emit_progress(&app_handle, src_path, "compressing", "PNG 预压缩...", 0, 0);
+                emit_progress(&app_handle, src_path, "compressing", "precompress_png", 0, 0);
 
                 // P1: use system temp dir, no path traversal
                 // S1: use set_extension to avoid format! panic on {}
@@ -319,11 +319,11 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
             }   // ← CR2: if-ext-png closes here
 
             // ── Step 3: decode image & encode to WebP (native, no external cwebp) ──
-            emit_progress(&app_handle, src_path, "converting", "转换为 WebP...", 0, 0);
+            emit_progress(&app_handle, src_path, "converting", "converting", 0, 0);
 
             let img = match ImageReader::open(src_path)
-                .map_err(|e| format!("无法打开图片: {}", e))
-                .and_then(|r| r.decode().map_err(|e| format!("解码失败: {}", e)))
+                .map_err(|e| format!("open_fail:{}", e))
+                .and_then(|r| r.decode().map_err(|e| format!("decode_fail:{}", e)))
             {
                 Ok(img) => img,
                 Err(e) => {
@@ -347,11 +347,17 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
 
             match encode_result {
                 Ok(webp_mem) => {
-                    if let Err(e) = std::fs::write(&output_str, &*webp_mem) {
+                    let new_size = webp_mem.len() as i64;
+
+                    // Skip if WebP output is not smaller than original
+                    if new_size >= original_size && original_size > 0 {
+                        stats.skip_count += 1;
+                        stats.total_converted += original_size;
+                        emit_progress(&app_handle, src_path, "skipped", "skipped", 0, 0);
+                    } else if let Err(e) = std::fs::write(&output_str, &*webp_mem) {
                         stats.fail_count += 1;
-                        emit_progress(&app_handle, src_path, "failed", &format!("写入失败: {}", e), 0, 0);
+                        emit_progress(&app_handle, src_path, "failed", &format!("write_fail:{}", e), 0, 0);
                     } else {
-                        let new_size = webp_mem.len() as i64;
                         stats.total_converted += new_size;
 
                         let saved_bytes = original_size - new_size;
@@ -362,19 +368,19 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
                         };
                         stats.success_count += 1;
 
-                        emit_progress(&app_handle, src_path, "done", &format!("已保存 {} KB", new_size / 1024), saved_bytes, saved_pct);
+                        emit_progress(&app_handle, src_path, "done", &format!("saved:{}kb", new_size / 1024), saved_bytes, saved_pct);
 
                         if request.delete_source {
                             if let Err(e) = std::fs::remove_file(src_path) {
                                 emit_progress(&app_handle, src_path, "done",
-                                    &format!("已转换，但删除源文件失败: {}", e), saved_bytes, saved_pct);
+                                    &format!("delete_fail:{}", e), saved_bytes, saved_pct);
                             }
                         }
                     }
                 }
                 Err(e) => {
                     stats.fail_count += 1;
-                    emit_progress(&app_handle, src_path, "failed", &format!("WebP 编码失败: {:?}", e), 0, 0);
+                    emit_progress(&app_handle, src_path, "failed", &format!("encode_fail:{:?}", e), 0, 0);
                 }
             }
 
@@ -403,19 +409,22 @@ fn start_convert(app: AppHandle, state: State<AppState>, request: ConvertRequest
 // ─── Command timeout helper (H2) ──────────────────────────────────
 
 /// Kill a process by PID (cross-platform)
-#[cfg(unix)]
 fn kill_process(pid: u32) {
-    let _ = std::process::Command::new("kill")
-        .arg("-9")
-        .arg(pid.to_string())
-        .status();
-}
-#[cfg(windows)]
-fn kill_process(pid: u32) {
-    let _ = std::process::Command::new("taskkill")
-        .arg("/PID").arg(pid.to_string())
-        .arg("/F").arg("/T")
-        .status();
+    // Fallback: use OS command when child handle is moved to another thread
+    #[cfg(unix)]
+    {
+        let _ = std::process::Command::new("kill")
+            .arg("-9")
+            .arg(pid.to_string())
+            .status();
+    }
+    #[cfg(windows)]
+    {
+        let _ = std::process::Command::new("taskkill")
+            .arg("/PID").arg(pid.to_string())
+            .arg("/F").arg("/T")
+            .status();
+    }
 }
 
 /// Run a command with a timeout. Returns (exit_code, combined stdout+stderr).
@@ -427,7 +436,7 @@ fn run_cmd_timeout(cmd: &mut Command, secs: u64) -> (i32, String) {
         .spawn()
     {
         Ok(c) => c,
-        Err(e) => return (-1, format!("启动失败: {}", e)),
+        Err(e) => return (-1, format!("spawn_fail:{}", e)),
     };
 
     let pid = child.id();
@@ -470,16 +479,16 @@ fn run_cmd_timeout(cmd: &mut Command, secs: u64) -> (i32, String) {
             let err = err_rx.recv_timeout(Duration::from_secs(3)).unwrap_or_default();
             (code, format!("{}{}", out, err))
         }
-        Ok(Err(_)) => (-1, "进程监控错误".into()),
+        Ok(Err(_)) => (-1, "ERR_PROCESS".into()),
         Err(mpsc::RecvTimeoutError::Timeout) => {
             // CR3: cross-platform kill (kill -9 on Unix, taskkill on Windows)
             // CR4: signal reader threads to drop their output
             cancelled.store(true, Ordering::Relaxed);
             kill_process(pid);
             std::thread::sleep(Duration::from_millis(200));
-            (-1, format!("超时 (>{}s)", secs))
+            (-1, format!("timeout:{}s", secs))
         }
-        Err(_) => (-1, "通道错误".into()),
+        Err(_) => (-1, "ERR_CHANNEL".into()),
     }
 }
 

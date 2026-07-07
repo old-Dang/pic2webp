@@ -120,17 +120,25 @@ function checkFileWarnings() {
   header.insertAdjacentElement("afterend", warn);
 }
 
-// Fetch file sizes via Tauri (non-blocking, best-effort)
+// Fetch file sizes via Tauri (non-blocking, best-effort, parallel)
 async function fetchFileSizes() {
   if (!isTauri()) return;
-  for (const f of files) {
-    if (f.size > 0) continue;
-    try {
-      const size = await invoke("get_file_size", { path: f.path });
-      f.size = size;
-    } catch (_) {
-      // Non-critical, skip
-    }
+  const pending = files.filter((f) => f.size === 0);
+  if (pending.length === 0) return;
+
+  // Batch requests to avoid overwhelming the backend (max 10 concurrent)
+  const BATCH = 10;
+  for (let i = 0; i < pending.length; i += BATCH) {
+    const batch = pending.slice(i, i + BATCH);
+    await Promise.all(
+      batch.map(async (f) => {
+        try {
+          f.size = await invoke("get_file_size", { path: f.path });
+        } catch (_) {
+          // Non-critical, skip
+        }
+      })
+    );
   }
   renderFiles();
   checkFileWarnings();
@@ -240,6 +248,11 @@ function updateFileProgress(filePath, status, message, savedBytes, savedPct) {
     badge.textContent = statusLabel(status);
     const size = item.querySelector(".file-size");
     size.textContent = savedBytes > 0 ? t("saved-bytes", { size: formatBytes(savedBytes) }) : translateBackendMessage(message) || "";
+
+    // Auto-scroll to the file currently being processed
+    if (status === "compressing" || status === "converting") {
+      item.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
   }
 }
 
@@ -441,6 +454,9 @@ async function setupListeners() {
     isConverting = false;
     updateStats(event.payload);
     updateConvertBtn();
+    // Pulse the stats panel to draw attention to results
+    statsPanel.classList.add("pulse");
+    setTimeout(() => statsPanel.classList.remove("pulse"), 1000);
   });
 }
 
