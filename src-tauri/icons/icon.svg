@@ -9,17 +9,18 @@
     </filter>
   </defs>
 
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- Apple HIG: icon content fills ~80% of canvas, ~10% padding on each side -->
+  <rect x="50" y="50" width="412" height="412" rx="90" fill="url(#bg)"/>
 
-  <rect x="120" y="96" width="160" height="210" rx="20" fill="white" opacity="0.28"/>
-
-  <rect x="232" y="178" width="160" height="210" rx="20" fill="white" filter="url(#shadow)"/>
-
-  <path d="M168 306 L168 220 M168 220 L148 244 M168 220 L188 244"
-        fill="none" stroke="white" stroke-width="18"
-        stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
-
-  <path d="M266 296 L292 322 L346 262"
-        fill="none" stroke="#16a34a" stroke-width="22"
-        stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Inner elements scaled proportionally to fit padded background -->
+  <g transform="translate(50, 50) scale(0.8047)">
+    <rect x="120" y="96" width="160" height="210" rx="20" fill="white" opacity="0.28"/>
+    <rect x="232" y="178" width="160" height="210" rx="20" fill="white" filter="url(#shadow)"/>
+    <path d="M168 306 L168 220 M168 220 L148 244 M168 220 L188 244"
+          fill="none" stroke="white" stroke-width="18"
+          stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+    <path d="M266 296 L292 322 L346 262"
+          fill="none" stroke="#16a34a" stroke-width="22"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
 </svg>

@@ -22,5 +22,10 @@ Thumbs.db
 *.msi
 *.app
 
+# ─── AI agent 工作文件（含个人信息，不提交）───
+findings.md
+task_plan.md
+progress.md
+
 # ─── 工具临时文件 ───
 .playwright-cli/
