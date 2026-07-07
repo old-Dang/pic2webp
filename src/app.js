@@ -88,20 +88,24 @@ function renderFiles() {
   if (files.length === 0) {
     fileList.innerHTML = `
       <div class="empty-state">
-        <p data-i18n="why-webp">${t("why-webp")}</p>
-        <ul>
-          <li data-i18n="why-1">${t("why-1")}</li>
-          <li data-i18n="why-2">${t("why-2")}</li>
-          <li data-i18n="why-3">${t("why-3")}</li>
-          <li data-i18n="why-4">${t("why-4")}</li>
-        </ul>
-        <p style="margin-top:14px" data-i18n="how-title">${t("how-title")}</p>
-        <ul>
-          <li data-i18n="how-1">${t("how-1")}</li>
-          <li data-i18n="how-2">${t("how-2")}</li>
-          <li data-i18n="how-3">${t("how-3")}</li>
-          <li data-i18n="how-4">${t("how-4")}</li>
-        </ul>
+        <div class="info-section">
+          <p data-i18n="why-webp">${t("why-webp")}</p>
+          <ul>
+            <li data-i18n="why-1">${t("why-1")}</li>
+            <li data-i18n="why-2">${t("why-2")}</li>
+            <li data-i18n="why-3">${t("why-3")}</li>
+            <li data-i18n="why-4">${t("why-4")}</li>
+          </ul>
+        </div>
+        <div class="info-section">
+          <p data-i18n="how-title">${t("how-title")}</p>
+          <ul>
+            <li data-i18n="how-1">${t("how-1")}</li>
+            <li data-i18n="how-2">${t("how-2")}</li>
+            <li data-i18n="how-3">${t("how-3")}</li>
+            <li data-i18n="how-4">${t("how-4")}</li>
+          </ul>
+        </div>
       </div>`;
     fileCountText.textContent = t("file-count", { n: files.length });
     clearBtn.hidden = true;
