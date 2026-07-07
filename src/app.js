@@ -12,6 +12,10 @@ let isConverting = false;
 let stats = null;
 let namingMode = "webp-suffix";
 
+// Thresholds
+const LARGE_FILE_BYTES = 50 * 1024 * 1024; // 50MB
+const BATCH_WARN_COUNT = 200;
+
 // ─── DOM refs ───────────────────────────────────────────────────────
 
 const $ = (s) => document.querySelector(s);
@@ -73,11 +77,63 @@ function addFiles(paths) {
   for (const p of paths) {
     if (!p || typeof p !== "string") continue;
     if (!files.some((f) => f.path === p)) {
-      files.push({ path: p, status: "pending", message: "", savedBytes: 0, savedPct: 0 });
+      files.push({ path: p, status: "pending", message: "", savedBytes: 0, savedPct: 0, size: 0 });
     }
   }
   renderFiles();
+  checkFileWarnings();
   updateConvertBtn();
+  // Best-effort fetch file sizes for large-file detection
+  fetchFileSizes();
+}
+
+// ─── Batch / size warnings ────────────────────────────────────────────
+
+function checkFileWarnings() {
+  // Remove existing warning
+  const existing = document.getElementById("batch-warning");
+  if (existing) existing.remove();
+
+  if (files.length === 0) return;
+
+  // Check for large individual files
+  const largeFiles = files.filter((f) => f.size > 0 && f.size >= LARGE_FILE_BYTES);
+  // Check for large batch count
+  const tooMany = files.length > BATCH_WARN_COUNT;
+
+  if (largeFiles.length === 0 && !tooMany) return;
+
+  const warn = document.createElement("div");
+  warn.id = "batch-warning";
+  warn.className = "hint warn";
+
+  if (largeFiles.length > 0) {
+    const f = largeFiles[0];
+    const name = f.path.split(/[/\\]/).pop();
+    warn.textContent = t("large-file-warn", { name, size: formatBytes(f.size) });
+  } else if (tooMany) {
+    warn.textContent = t("batch-warn", { n: files.length });
+  }
+
+  // Insert after file-list-header
+  const header = document.querySelector(".file-list-header");
+  header.insertAdjacentElement("afterend", warn);
+}
+
+// Fetch file sizes via Tauri (non-blocking, best-effort)
+async function fetchFileSizes() {
+  if (!isTauri()) return;
+  for (const f of files) {
+    if (f.size > 0) continue;
+    try {
+      const size = await invoke("get_file_size", { path: f.path });
+      f.size = size;
+    } catch (_) {
+      // Non-critical, skip
+    }
+  }
+  renderFiles();
+  checkFileWarnings();
 }
 
 // ─── Render file list ───────────────────────────────────────────────
@@ -104,6 +160,14 @@ function renderFiles() {
             <li data-i18n="how-2">${t("how-2")}</li>
             <li data-i18n="how-3">${t("how-3")}</li>
             <li data-i18n="how-4">${t("how-4")}</li>
+          </ul>
+        </div>
+        <div class="info-section">
+          <p data-i18n="tips-title">${t("tips-title")}</p>
+          <ul>
+            <li data-i18n="tips-1">${t("tips-1")}</li>
+            <li data-i18n="tips-2">${t("tips-2")}</li>
+            <li data-i18n="tips-3">${t("tips-3")}</li>
           </ul>
         </div>
       </div>`;
@@ -305,6 +369,8 @@ clearBtn.addEventListener("click", () => {
   files = [];
   stats = null;
   statsPanel.hidden = true;
+  const warn = document.getElementById("batch-warning");
+  if (warn) warn.remove();
   renderFiles();
   updateConvertBtn();
 });

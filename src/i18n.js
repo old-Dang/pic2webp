@@ -25,6 +25,12 @@ const dict = {
     "how-3": "所有处理本地完成，不上传任何文件",
     "how-4": "转换后自动统计节省空间",
 
+    // Batch tips
+    "tips-title": "批量处理提示",
+    "tips-1": "逐张串行转换，批量拖入不会卡顿",
+    "tips-2": "单张建议 < 50MB，超大会占用较多内存",
+    "tips-3": "建议单次不超过 200 张，更多请分批处理",
+
     // Blog
     "blog": "博客",
 
@@ -71,6 +77,8 @@ const dict = {
     // File size messages
     "saved-bytes": "节省 {size}",
     "convert-failed": "启动转换失败",
+    "large-file-warn": "⚠️ {name} ({size}) 体积较大，转换可能占用较多内存",
+    "batch-warn": "⚠️ 已添加 {n} 个文件，建议分批处理",
 
     // Dialog
     "select-output-dir": "选择输出目录",
@@ -115,6 +123,12 @@ const dict = {
     "how-2": "Optional jpegoptim / pngquant pre-compression",
     "how-3": "All processing is local, no uploads",
     "how-4": "Auto-calculates space savings",
+
+    // Batch tips
+    "tips-title": "Batch Tips",
+    "tips-1": "Sequential conversion, no lag on batch import",
+    "tips-2": "Keep each file under 50MB to avoid high memory use",
+    "tips-3": "Recommended max 200 files per batch",
 
     // Blog
     "blog": "Blog",
@@ -162,6 +176,8 @@ const dict = {
     // File size messages
     "saved-bytes": "Saved {size}",
     "convert-failed": "Failed to start conversion",
+    "large-file-warn": "⚠️ {name} ({size}) is large, conversion may use significant memory",
+    "batch-warn": "⚠️ {n} files added, consider processing in smaller batches",
 
     // Dialog
     "select-output-dir": "Select output directory",

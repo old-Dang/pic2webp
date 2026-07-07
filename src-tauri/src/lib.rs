@@ -133,6 +133,13 @@ fn check_tools(state: State<AppState>) -> ToolCheck {
     }
 }
 
+
+#[tauri::command]
+fn get_file_size(path: String) -> Result<u64, String> {
+    std::fs::metadata(&path)
+        .map(|m| m.len())
+        .map_err(|e| e.to_string())
+}
 /// Helper: unlock is_converting and return an Err with the given message.
 macro_rules! bail_and_unlock {
     ($guard:expr, $msg:expr) => {{
@@ -502,7 +509,7 @@ pub fn run() {
             });
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![check_tools, start_convert])
+        .invoke_handler(tauri::generate_handler![check_tools, start_convert, get_file_size])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
